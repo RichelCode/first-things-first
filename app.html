@@ -1,0 +1,1500 @@
+<title>First Things First</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* ── tokens ─────────────────────────────────────────────────────────────── */
+:root{
+  --ground:#FBF4F6; --surface:#FFFFFF; --surface-2:#F6EAEE; --surface-3:#EFDFE5;
+  --border:#E7D3DA; --border-strong:#D6BCC6;
+  --ink:#2E1C28; --ink-2:#6B5460; --ink-3:#96808C;
+  --accent:#C7326B; --accent-soft:#FBE7EE; --accent-ink:#96204F;
+  --critical:#A02116; --critical-soft:#FBEAE8;
+  --d-faith:#6B47C9; --d-paid:#B0740E; --d-build:#C7326B; --d-life:#12774F;
+  --shadow:0 1px 2px rgba(46,28,40,.06), 0 8px 24px -16px rgba(46,28,40,.28);
+  --r:12px; --r-sm:8px;
+  --sans:"Karla",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --serif:"Fraunces",Georgia,"Times New Roman",serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#181118; --surface:#241A24; --surface-2:#2E222E; --surface-3:#3A2B3A;
+    --border:#3E2F3E; --border-strong:#544154;
+    --ink:#F7EBF1; --ink-2:#C3AEBA; --ink-3:#9A8592;
+    --accent:#E65C85; --accent-soft:#3A1E2A; --accent-ink:#F4A0B8;
+    --critical:#F08579; --critical-soft:#3A1E1A;
+    --d-faith:#8A6FE0; --d-paid:#BF8A28; --d-build:#E65C85; --d-life:#0E9463;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#181118; --surface:#241A24; --surface-2:#2E222E; --surface-3:#3A2B3A;
+  --border:#3E2F3E; --border-strong:#544154;
+  --ink:#F7EBF1; --ink-2:#C3AEBA; --ink-3:#9A8592;
+  --accent:#E65C85; --accent-soft:#3A1E2A; --accent-ink:#F4A0B8;
+  --critical:#F08579; --critical-soft:#3A1E1A;
+  --d-faith:#8A6FE0; --d-paid:#BF8A28; --d-build:#E65C85; --d-life:#0E9463;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--serif);font-weight:600;margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:7px 9px;min-width:0}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,[tabindex]:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.muted{color:var(--ink-2)}
+.dim{color:var(--ink-3)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── chrome ─────────────────────────────────────────────────────────────── */
+.wrap{max-width:1120px;margin:0 auto;padding-inline:18px;padding-block:0 64px}
+header.bar{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--ground) 88%,transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.bar-in{max-width:1120px;margin:0 auto;padding:14px 18px 0;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:baseline}
+.brand{font-family:var(--serif);font-size:21px;font-weight:600;letter-spacing:-.02em;margin:0}
+.brand em{font-style:normal;color:var(--accent)}
+.datestamp{font-family:var(--mono);font-size:12px;color:var(--ink-2);letter-spacing:.02em}
+.bar-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+nav.tabs{max-width:1120px;margin:0 auto;padding:10px 18px 0;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px 10px;color:var(--ink-2);
+  font-weight:600;font-size:14px;white-space:nowrap;border-radius:6px 6px 0 0}
+.tab:hover{color:var(--ink);background:var(--surface-2)}
+.tab[aria-selected="true"]{color:var(--accent-ink);border-bottom-color:var(--accent)}
+.storepill{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--ink-3);border:1px solid var(--border);
+  border-radius:999px;padding:3px 9px;background:var(--surface)}
+
+/* ── primitives ─────────────────────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px}
+.card.flat{background:transparent;border-color:transparent;padding:0}
+.card-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.card-h h2{font-size:17px}
+.card-h .grow{flex:1}
+.grid{display:grid;gap:16px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;
+  font-weight:600;font-size:13.5px;color:var(--ink)}
+.btn:hover{border-color:var(--border-strong);background:var(--surface-3)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:4px 9px;font-size:12.5px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.chip{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:4px 11px;font-size:12.5px;
+  font-weight:600;color:var(--ink-2)}
+.chip:hover{border-color:var(--border-strong);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.dot{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
+.sect-title{font-family:var(--serif);font-size:22px;margin:26px 0 4px}
+.sect-sub{color:var(--ink-2);font-size:14px;margin-bottom:14px;max-width:62ch}
+.empty{border:1px dashed var(--border-strong);border-radius:var(--r);padding:22px;color:var(--ink-2);font-size:14px;
+  background:var(--surface-2)}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;letter-spacing:.02em;
+  border-radius:999px;padding:2px 8px;border:1px solid var(--border);color:var(--ink-2);background:var(--surface-2)}
+.pill.over{color:var(--critical);border-color:var(--critical);background:var(--critical-soft)}
+.pill.now{color:#fff;background:var(--accent);border-color:var(--accent)}
+hr.rule{border:0;border-top:1px solid var(--border);margin:18px 0}
+
+/* ── today: the day spine ───────────────────────────────────────────────── */
+.two{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:880px){.two{grid-template-columns:1fr}}
+.spine{display:flex;flex-direction:column;gap:6px;position:relative}
+.blk{display:grid;grid-template-columns:54px 3px 1fr auto;gap:0 12px;align-items:stretch;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
+.blk .t{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);padding:10px 0 10px 11px;line-height:1.35;
+  font-variant-numeric:tabular-nums}
+.blk .stripe{background:var(--stripe,var(--border))}
+.blk .body{padding:9px 0;min-width:0}
+.blk .lbl{font-weight:600;font-size:14px;line-height:1.35}
+.blk .meta{font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.blk .acts{display:flex;gap:4px;align-items:center;padding:8px 10px 8px 0}
+.blk.is-now{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.blk.done{background:var(--surface-2)}
+.blk.done .lbl{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--ink-3)}
+.blk.skip{opacity:.5}
+.blk.skip .lbl{text-decoration:line-through;text-decoration-color:var(--ink-3)}
+.tick{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--surface-2);
+  display:grid;place-items:center;font-size:13px;line-height:1;color:var(--ink-2);padding:0}
+.tick:hover{border-color:var(--border-strong);color:var(--ink)}
+.tick[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.nowline{display:flex;align-items:center;gap:8px;margin:2px 0}
+.nowline .ln{flex:1;height:1px;background:var(--accent)}
+.nowline .tx{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--accent);letter-spacing:.04em}
+.sabbath{background:linear-gradient(180deg,var(--accent-soft),transparent);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 16px}
+.sabbath .q{font-family:var(--serif);font-size:16px;line-height:1.4}
+
+/* ── one thing ──────────────────────────────────────────────────────────── */
+.onething{background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--r);padding:14px 16px}
+.onething input{width:100%;background:var(--surface);border-color:var(--border-strong);font-size:15px;font-weight:600;
+  margin-top:7px}
+
+/* ── habits ─────────────────────────────────────────────────────────────── */
+.habits{display:flex;flex-direction:column;gap:4px}
+.habit{display:flex;align-items:center;gap:10px;padding:5px 2px}
+.habit .nm{flex:1;font-size:14px;font-weight:500}
+.habit .stk{font-family:var(--mono);font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.box{width:24px;height:24px;border-radius:7px;border:1.5px solid var(--border-strong);background:var(--surface);
+  display:grid;place-items:center;padding:0;font-size:13px;line-height:1;color:transparent;flex:0 0 auto}
+.box:hover{border-color:var(--hue,var(--accent))}
+.box[aria-pressed="true"]{background:var(--hue,var(--accent));border-color:var(--hue,var(--accent));color:#fff}
+
+/* ── timer ──────────────────────────────────────────────────────────────── */
+.timer{display:flex;flex-direction:column;gap:10px}
+.timer .disp{font-family:var(--mono);font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1;
+  font-variant-numeric:tabular-nums}
+.timer .disp.idle{color:var(--ink-3)}
+.timer select{flex:1}
+
+/* ── tracks ─────────────────────────────────────────────────────────────── */
+.trk{display:grid;grid-template-columns:3px 1fr;gap:0 14px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden}
+.trk .stripe{background:var(--stripe)}
+.trk .in{padding:14px 16px 14px 0;min-width:0}
+.trk .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.trk .nm{font-weight:700;font-size:15px}
+.trk .num{font-family:var(--mono);font-size:12.5px;color:var(--ink-2);margin-left:auto;font-variant-numeric:tabular-nums}
+.meter{height:7px;border-radius:4px;background:var(--surface-3);margin-top:10px;position:relative;overflow:hidden}
+.meter .fill{position:absolute;inset:0 auto 0 0;border-radius:4px;background:var(--stripe)}
+.trk .next{margin-top:9px;font-size:13.5px;color:var(--ink-2)}
+.trk .next b{color:var(--ink);font-weight:600}
+
+/* ── tasks ──────────────────────────────────────────────────────────────── */
+.tl{display:flex;flex-direction:column;gap:5px}
+.task{display:flex;gap:11px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:10px 12px;border-left:3px solid var(--stripe,var(--border))}
+.task.done{background:var(--surface-2);border-left-color:var(--border)}
+.task.done .tt{color:var(--ink-3);text-decoration:line-through}
+.task .tt{font-weight:600;font-size:14px;line-height:1.35}
+.task .sub{font-size:11.5px;color:var(--ink-3);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.task .grow{flex:1;min-width:0}
+.xbtn{background:none;border:0;color:var(--ink-3);font-size:15px;line-height:1;padding:2px 4px;border-radius:5px}
+.xbtn:hover{color:var(--critical);background:var(--critical-soft)}
+.addbar{display:grid;grid-template-columns:minmax(0,1fr) 170px 140px 72px auto;gap:8px}
+@media (max-width:760px){.addbar{grid-template-columns:1fr 1fr}.addbar input:first-child{grid-column:1/-1}}
+
+/* ── report chart ───────────────────────────────────────────────────────── */
+.chart{display:flex;flex-direction:column;gap:7px}
+.crow{display:grid;grid-template-columns:minmax(120px,168px) minmax(0,1fr) 92px;gap:12px;align-items:center}
+@media (max-width:620px){.crow{grid-template-columns:1fr;gap:3px}.crow .cval{text-align:left}}
+.crow .clbl{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;min-width:0}
+.crow .clbl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctrack{position:relative;height:18px;background:var(--surface-2);border-radius:4px}
+.cbar{position:absolute;left:0;top:0;bottom:0;background:var(--stripe);border-radius:0 4px 4px 0;min-width:2px;
+  border-right:2px solid var(--surface)}
+.cbar.zero{background:var(--border-strong)}
+.ctgt{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink-3);border-radius:2px}
+.crow .cval{font-family:var(--mono);font-size:12px;color:var(--ink-2);text-align:right;font-variant-numeric:tabular-nums}
+.caxis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);
+  border-top:1px solid var(--border);padding-top:5px;margin-top:3px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+table.data{width:100%;border-collapse:collapse;font-size:13px}
+table.data th,table.data td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)}
+table.data th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+table.data td.n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.scroll-x{overflow-x:auto}
+
+/* habit heatmap */
+.hm{display:grid;grid-template-columns:minmax(96px,150px) repeat(7,minmax(0,1fr)) 54px;gap:4px;align-items:center}
+.hm .hd{font-family:var(--mono);font-size:10px;color:var(--ink-3);text-align:center}
+.hm .rl{font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cell{height:22px;border-radius:5px;background:var(--surface-2);border:1px solid var(--border)}
+.cell.on{background:var(--hue);border-color:var(--hue)}
+.cell.future{background:transparent;border-style:dashed}
+.hm .rn{font-family:var(--mono);font-size:11px;color:var(--ink-2);text-align:right;font-variant-numeric:tabular-nums}
+
+/* stat strip */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:1px;background:var(--border);
+  border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.stat{background:var(--surface);padding:13px 14px}
+.stat .k{font-family:var(--mono);font-size:23px;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.stat .l{font-size:11.5px;color:var(--ink-3);margin-top:3px;font-weight:500}
+
+/* narrative */
+.narr{font-family:var(--serif);font-size:16.5px;line-height:1.6;max-width:64ch}
+.narr p+p{margin-top:.7em}
+
+/* week grid */
+.wk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+@media (max-width:900px){.wk{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.wk{grid-template-columns:1fr}}
+.day{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px 11px 13px;
+  display:flex;flex-direction:column;gap:7px}
+.day.is-today{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.day.sun{background:var(--surface-2)}
+.day .dh{display:flex;align-items:baseline;gap:6px}
+.day .dn{font-family:var(--serif);font-size:15px;font-weight:600}
+.day .dd{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-left:auto}
+.wb{display:grid;grid-template-columns:3px 1fr;gap:0 8px;font-size:11.5px;line-height:1.3}
+.wb .s{background:var(--stripe);border-radius:2px}
+.wb .tm{font-family:var(--mono);font-size:10px;color:var(--ink-3);display:block}
+
+/* tooltip */
+#tip{position:fixed;z-index:80;pointer-events:none;background:var(--ink);color:var(--ground);font-size:12px;
+  font-weight:500;padding:6px 9px;border-radius:6px;box-shadow:var(--shadow);max-width:240px;opacity:0;
+  transition:opacity .12s}
+#tip.on{opacity:1}
+#tip .tk{font-family:var(--mono)}
+
+/* setup */
+.setup textarea{width:100%;font-family:var(--mono);font-size:12px;line-height:1.5;min-height:260px}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:8px 12px;align-items:center;font-size:13.5px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--ground);
+  padding:10px 16px;border-radius:999px;font-size:13px;font-weight:600;box-shadow:var(--shadow);z-index:90;
+  opacity:0;transition:opacity .18s,transform .18s}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(-4px)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+
+<header class="bar">
+  <div class="bar-in">
+    <h1 class="brand">First <em>Things</em> First</h1>
+    <span class="datestamp" id="stamp"></span>
+    <span class="bar-right"><span class="storepill" id="storepill">local only</span></span>
+  </div>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+</header>
+<main class="wrap" id="view" role="tabpanel"></main>
+<div id="tip" role="status" aria-live="off"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ═══════════════════════════════════════════════════════════════════════════
+   First Things First — a weekly operating system.
+   Four domains: God · Paid work · The PhD build · Life & body.
+   Data lives in the artifact store when available, otherwise this browser.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── seed configuration ────────────────────────────────────────────────── */
+const DOMAINS = [
+  { id:"faith", name:"God",            v:"--d-faith" },
+  { id:"paid",  name:"Paid work",      v:"--d-paid"  },
+  { id:"build", name:"The PhD build",  v:"--d-build" },
+  { id:"life",  name:"Life & body",    v:"--d-life"  },
+];
+
+const SEED_TRACKS = [
+  { id:"faith",     dom:"faith", name:"Prayer, Bible & church",      target:7,
+    next:"Catch the Bible plan up to today" },
+  { id:"teaching",  dom:"paid",  name:"Teaching · 6th grade math",   target:40,
+    next:"Lesson plans a week ahead, not a night ahead" },
+  { id:"contract",  dom:"paid",  name:"Contract work · billing",     target:7,
+    next:"Billing bulk on Saturday, submit Monday" },
+  { id:"startup",   dom:"paid",  name:"Startup advisory",            target:2,
+    next:"Prep Monday's call over the weekend" },
+  { id:"advres",    dom:"build", name:"Research with advisor",       target:4,
+    next:"Ship one result before Friday's meeting" },
+  { id:"algoverse", dom:"build", name:"Algoverse research",          target:2.5,
+    next:"Watch the backlog of videos, join a group" },
+  { id:"phd",       dom:"build", name:"PhD applications",            target:3,
+    next:"5 cold emails a week until December" },
+  { id:"cert",      dom:"build", name:"AI/ML certification",         target:2,
+    next:"One module per week, no more" },
+  { id:"body",      dom:"life",  name:"Gym, food & self-care",       target:5,
+    next:"Three sessions: Tue, Thu, Sat" },
+  { id:"people",    dom:"life",  name:"Family & people",             target:6,
+    next:"Protect Friday night and Sunday afternoon" },
+  { id:"rest",      dom:"life",  name:"Rest & admin",                target:8,
+    next:"Sunday is not a backlog day" },
+];
+
+const B = (start, end, label, track) => ({ start, end, label, track });
+
+/* A weekday shell, then one deep block per evening so you are never
+   carrying five tracks in one day. Billing bulk moves to Saturday —
+   a six-hour job does not fit inside a teaching Monday. */
+const WEEKDAY_AM = [
+  B("05:45","06:30","Quiet time — Bible + prayer","faith"),
+  B("06:30","07:15","Get ready, eat, skincare","body"),
+  B("07:30","15:30","Teach + tomorrow's lesson","teaching"),
+  B("15:30","16:00","Commute, decompress, no screens","rest"),
+];
+const CLOSE = [ B("20:30","21:30","Dinner + wind down","rest"),
+                B("21:30","22:30","Phone away. Sleep.","rest") ];
+
+const SEED_RHYTHM = {
+  1:[...WEEKDAY_AM,
+     B("16:00","17:00","Startup advisory call","startup"),
+     B("17:15","19:15","Billing — finish and submit","contract"),
+     B("19:15","20:00","Dinner","body"),
+     B("20:00","20:20","Log the day + tomorrow's one thing","rest"),
+     ...CLOSE],
+  2:[...WEEKDAY_AM,
+     B("16:00","17:00","Gym","body"),
+     B("17:30","19:30","PhD applications — 5 cold emails","phd"),
+     B("19:30","20:15","Dinner + call home","people"),
+     B("20:15","20:30","Log the day","rest"),
+     ...CLOSE],
+  3:[...WEEKDAY_AM,
+     B("16:00","17:00","Analysis + slides, final pass","contract"),
+     B("17:00","18:00","CEO check-in","contract"),
+     B("18:15","19:15","Certification — one module","cert"),
+     B("19:15","20:15","Dinner + rest","rest"),
+     B("20:15","20:30","Log the day","rest"),
+     ...CLOSE],
+  4:[...WEEKDAY_AM,
+     B("16:00","17:00","Gym","body"),
+     B("17:30","19:30","Advisor research — run + write up","advres"),
+     B("19:30","20:00","Draft Friday's agenda","advres"),
+     B("20:00","20:20","Log the day","rest"),
+     ...CLOSE],
+  5:[...WEEKDAY_AM,
+     B("16:00","17:00","Advisor research meeting","advres"),
+     B("17:15","18:15","Algoverse — videos + group","algoverse"),
+     B("18:30","22:00","Free. People you love, dinner out.","people"),
+     B("22:30","23:00","Sleep","rest")],
+  6:[B("07:30","08:15","Quiet time — Bible + prayer","faith"),
+     B("08:30","09:30","Gym","body"),
+     B("10:00","12:00","Billing — block 1","contract"),
+     B("12:00","13:00","Lunch + break","body"),
+     B("13:00","15:00","Billing — block 2","contract"),
+     B("15:00","16:00","Break. Actually stop.","rest"),
+     B("16:00","17:30","Certification / Algoverse","cert"),
+     B("18:00","19:00","Family call","people"),
+     B("19:30","20:00","Weekly review + next week's plan","rest"),
+     B("20:00","22:30","Free","people")],
+  0:[B("08:00","09:00","Quiet time + prayer","faith"),
+     B("09:30","12:30","Church","faith"),
+     B("13:00","15:00","Lunch + nap","rest"),
+     B("15:00","18:00","Family / partner","people"),
+     B("18:00","21:00","Rest. No laptop.","rest"),
+     B("21:30","22:00","Sleep","rest")],
+};
+
+const SEED_HABITS = [
+  { id:"prayer",   name:"Prayer",              track:"faith", days:[0,1,2,3,4,5,6] },
+  { id:"bible",    name:"Bible reading",       track:"faith", days:[0,1,2,3,4,5,6] },
+  { id:"quiet",    name:"Quiet time",          track:"faith", days:[0,1,2,3,4,5,6] },
+  { id:"church",   name:"Church",              track:"faith", days:[0] },
+  { id:"move",     name:"Moved my body",       track:"body",  days:[2,4,6] },
+  { id:"food",     name:"Ate real food",       track:"body",  days:[0,1,2,3,4,5,6] },
+  { id:"skin",     name:"Skincare",            track:"body",  days:[0,1,2,3,4,5,6] },
+  { id:"offline",  name:"Screens off by 21:30",track:"rest",  days:[1,2,3,4,5] },
+  { id:"sleep",    name:"Slept 7h+",           track:"rest",  days:[0,1,2,3,4,5,6] },
+];
+
+const SEED_TASKS = [
+  { t:"Shortlist 12 programs with their December deadlines", k:"phd",       p:1, est:90 },
+  { t:"Send 5 cold emails to prospective advisors",          k:"phd",       p:1, est:90 },
+  { t:"Draft statement of purpose, version 1",               k:"phd",       p:2, est:120 },
+  { t:"Ask advisor for a recommendation letter",             k:"phd",       p:1, est:15 },
+  { t:"Certification: finish module 1",                      k:"cert",      p:2, est:90 },
+  { t:"Algoverse: clear the video backlog",                  k:"algoverse", p:2, est:120 },
+  { t:"Algoverse: join a research group",                    k:"algoverse", p:1, est:30 },
+  { t:"Monday billing run",                                  k:"contract",  p:1, est:300 },
+  { t:"Wednesday report + slides",                           k:"contract",  p:1, est:90 },
+  { t:"Bible plan: catch up to today",                       k:"faith",     p:1, est:60 },
+];
+
+const SEED_CONFIG = () => ({
+  v: 1,
+  tracks: SEED_TRACKS.map(t => ({ ...t })),
+  rhythm: JSON.parse(JSON.stringify(SEED_RHYTHM)),
+  habits: SEED_HABITS.map(h => ({ ...h })),
+  bible: { start: new Date().getFullYear() + "-01-01", total: 365, day: 0 },
+});
+
+/* ── dates ─────────────────────────────────────────────────────────────── */
+const DAYNAME  = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const DAYSHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MONSUN   = [1,2,3,4,5,6,0];
+
+const pad = n => String(n).padStart(2,"0");
+const ymd = d => d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+const parseYmd = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const mondayOf = d => addDays(d, -((d.getDay()+6) % 7));
+const toMin = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
+const dur = b => Math.max(0, toMin(b.end) - toMin(b.start));
+const daysBetween = (a,b) => Math.round((parseYmd(b) - parseYmd(a)) / 86400000);
+
+function weekKey(d){
+  const t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  t.setDate(t.getDate() + 3 - ((t.getDay()+6) % 7));
+  const wk1 = new Date(t.getFullYear(), 0, 4);
+  const n = 1 + Math.round(((t - wk1) / 86400000 - 3 + ((wk1.getDay()+6) % 7)) / 7);
+  return t.getFullYear() + "-W" + pad(n);
+}
+const hm = m => {
+  m = Math.round(m);
+  if (m <= 0) return "0m";
+  const h = Math.floor(m/60), r = m % 60;
+  return h && r ? h+"h "+r+"m" : h ? h+"h" : r+"m";
+};
+const clock12 = t => {
+  const [h,m] = t.split(":").map(Number);
+  const s = h % 12 === 0 ? 12 : h % 12;
+  return s + (m ? ":"+pad(m) : "") + (h < 12 ? "a" : "p");
+};
+
+/* ── storage: artifact db when granted, this browser otherwise ─────────── */
+const Store = {
+  db: null, mode: "local",
+  lsKey: p => "ftf:" + p,
+  async connect(){
+    try {
+      const db = window.claude && window.claude.use ? await window.claude.use("db") : null;
+      if (db) { this.db = db; this.mode = "db"; }
+    } catch (_) { /* stay local */ }
+    return this.mode;
+  },
+  async get(path){
+    if (this.db) {
+      try { const s = await this.db.doc(path).get(); return s.exists ? s.data() : null; }
+      catch (e) { console.warn("read", path, e && e.code); return null; }
+    }
+    try { const raw = localStorage.getItem(this.lsKey(path)); return raw ? JSON.parse(raw) : null; }
+    catch (_) { return null; }
+  },
+  async set(path, obj){
+    if (this.db) {
+      try { await this.db.doc(path).set(obj); return true; }
+      catch (e) { toast(e && e.code === "quota_exceeded"
+        ? "Store is full — export and prune old weeks in Setup."
+        : "Could not save just now. Your change is still on screen."); return false; }
+    }
+    try { localStorage.setItem(this.lsKey(path), JSON.stringify(obj)); return true; }
+    catch (_) { toast("This browser refused to save. Try a normal window."); return false; }
+  },
+};
+
+/* ── in-memory state ───────────────────────────────────────────────────── */
+const S = {
+  cfg: null,          // app/config
+  tasks: { items: [] },// app/tasks
+  checks: {},         // app/checks   { habitId: { "YYYY-MM-DD": 1 } }
+  week: { entries: [], days: {} },   // logs/<weekKey>
+  weekKey: "",
+  timer: null,        // app/timer
+  tab: "today",
+  offset: 0,          // weeks back from this one, for Log & Report
+  showTable: false,
+  narrative: "",
+};
+
+const track = id => (S.cfg.tracks.find(t => t.id === id)) || { id, name:id, dom:"life", target:0 };
+const domVar = id => (DOMAINS.find(d => d.id === id) || DOMAINS[3]).v;
+const trackVar = id => domVar(track(id).dom);
+const domName = id => (DOMAINS.find(d => d.id === id) || DOMAINS[3]).name;
+
+let saveTimers = {};
+function queueSave(path, get){
+  clearTimeout(saveTimers[path]);
+  saveTimers[path] = setTimeout(() => Store.set(path, get()), 350);
+}
+const saveCfg    = () => queueSave("app/config", () => S.cfg);
+const saveTasks  = () => queueSave("app/tasks",  () => S.tasks);
+const saveChecks = () => queueSave("app/checks", () => S.checks);
+const saveWeek   = () => queueSave("logs/" + S.weekKey, () => S.week);
+const saveTimer  = () => Store.set("app/timer", S.timer || { off: true });
+
+/* ── week doc helpers ──────────────────────────────────────────────────── */
+async function loadWeek(key){
+  S.weekKey = key;
+  const w = await Store.get("logs/" + key);
+  S.week = w && Array.isArray(w.entries) ? w : { entries: [], days: {} };
+  if (!S.week.days) S.week.days = {};
+  return S.week;
+}
+const dayRec = date => (S.week.days[date] = S.week.days[date] || { blocks:{}, one:"", note:"", energy:0 });
+const entriesOn = date => S.week.entries.filter(e => e.date === date);
+const loggedOn = (date, trackId) =>
+  entriesOn(date).reduce((s,e) => s + (!trackId || e.track === trackId ? e.min : 0), 0);
+
+function addEntry(trackId, min, label, date){
+  if (!(min > 0)) return;
+  const d = date || ymd(new Date());
+  const k = weekKey(parseYmd(d));
+  const e = { id: Math.random().toString(36).slice(2,9), track: trackId, min: Math.round(min),
+              label: label || track(trackId).name, date: d };
+  if (k === S.weekKey) { S.week.entries.push(e); saveWeek(); }
+  else Store.get("logs/"+k).then(w => {
+    const wk = w && Array.isArray(w.entries) ? w : { entries: [], days: {} };
+    wk.entries.push(e); Store.set("logs/"+k, wk);
+  });
+}
+
+/* ── habits ────────────────────────────────────────────────────────────── */
+const isChecked = (h, date) => !!(S.checks[h] && S.checks[h][date]);
+function toggleHabit(h, date){
+  S.checks[h] = S.checks[h] || {};
+  if (S.checks[h][date]) delete S.checks[h][date]; else S.checks[h][date] = 1;
+  saveChecks();
+}
+function streak(habit){
+  const due = new Set(habit.days);
+  let n = 0, d = new Date(), guard = 0;
+  // don't punish today until the day is over — start from the most recent due day
+  while (guard++ < 500) {
+    const key = ymd(d);
+    if (due.has(d.getDay())) {
+      if (isChecked(habit.id, key)) n++;
+      else if (key !== ymd(new Date())) break;
+    }
+    d = addDays(d, -1);
+  }
+  return n;
+}
+
+/* ── tasks ─────────────────────────────────────────────────────────────── */
+const PRIO = { 1:"Must", 2:"Should", 3:"Someday" };
+function taskBucket(t){
+  const today = ymd(new Date());
+  if (t.done) return "done";
+  if (!t.due) return "later";
+  if (t.due < today) return "overdue";
+  if (t.due === today) return "today";
+  if (t.due <= ymd(addDays(mondayOf(new Date()), 6))) return "week";
+  return "later";
+}
+
+/* ── tiny view helpers ─────────────────────────────────────────────────── */
+const esc = s => String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const $  = (sel, root) => (root || document).querySelector(sel);
+const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+let toastT;
+function toast(msg){
+  const el = $("#toast");
+  el.textContent = msg; el.classList.add("on");
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 2600);
+}
+const tipEl = () => $("#tip");
+function bindTips(root){
+  $$("[data-tip]", root).forEach(el => {
+    el.addEventListener("mouseenter", () => {
+      const t = tipEl(); t.innerHTML = el.dataset.tip; t.classList.add("on");
+    });
+    el.addEventListener("mousemove", ev => {
+      const t = tipEl(), r = t.getBoundingClientRect();
+      t.style.left = Math.min(window.innerWidth - r.width - 10, ev.clientX + 12) + "px";
+      t.style.top  = Math.max(8, ev.clientY - r.height - 10) + "px";
+    });
+    el.addEventListener("mouseleave", () => tipEl().classList.remove("on"));
+  });
+}
+
+/* ═══ TABS ═══════════════════════════════════════════════════════════════ */
+const TABS = [
+  ["today",  "Today"],
+  ["week",   "The week"],
+  ["tracks", "Tracks"],
+  ["tasks",  "Backlog"],
+  ["log",    "Time log"],
+  ["report", "Weekly report"],
+  ["setup",  "Setup"],
+];
+
+function renderTabs(){
+  $("#tabs").innerHTML = TABS.map(([id,label]) =>
+    `<button class="tab" role="tab" data-tab="${id}" aria-selected="${S.tab===id}">${label}</button>`).join("");
+  $$("#tabs .tab").forEach(b => b.onclick = () => { S.tab = b.dataset.tab; S.narrative=""; render(); });
+}
+
+function stamp(){
+  const d = new Date();
+  $("#stamp").textContent = DAYNAME[d.getDay()].toUpperCase() + " · " +
+    d.toLocaleDateString(undefined,{month:"short",day:"numeric"}) + " · " + weekKey(d);
+  $("#storepill").textContent = Store.mode === "db" ? "synced" : "this browser only";
+}
+
+/* ═══ TODAY ══════════════════════════════════════════════════════════════ */
+function viewToday(){
+  const now = new Date(), date = ymd(now), dow = now.getDay();
+  const blocks = S.cfg.rhythm[dow] || [];
+  const rec = dayRec(date);
+  const nowMin = now.getHours()*60 + now.getMinutes();
+  const isSun = dow === 0;
+
+  const planned = blocks.reduce((s,b) => s + dur(b), 0);
+  const done = blocks.filter((b,i) => rec.blocks[i] === "done");
+  const loggedToday = loggedOn(date);
+
+  let spine = "", nowDrawn = false;
+  blocks.forEach((b,i) => {
+    const st = rec.blocks[i] || "";
+    const isNow = nowMin >= toMin(b.start) && nowMin < toMin(b.end);
+    if (!nowDrawn && nowMin < toMin(b.start)) {
+      spine += `<div class="nowline"><span class="tx mono">${pad(now.getHours())}:${pad(now.getMinutes())} NOW</span><span class="ln"></span></div>`;
+      nowDrawn = true;
+    }
+    spine += `
+    <div class="blk ${st} ${isNow?"is-now":""}" style="--stripe:var(${trackVar(b.track)})">
+      <div class="t">${clock12(b.start)}<br>${clock12(b.end)}</div>
+      <div class="stripe"></div>
+      <div class="body">
+        <div class="lbl">${esc(b.label)}</div>
+        <div class="meta">${esc(track(b.track).name)} · ${hm(dur(b))}${isNow?' · <span class="pill now">now</span>':""}</div>
+      </div>
+      <div class="acts">
+        <button class="tick" data-blk="${i}" data-act="done" aria-pressed="${st==="done"}"
+          title="Did it — log ${hm(dur(b))} to ${esc(track(b.track).name)}">✓</button>
+        <button class="tick" data-blk="${i}" data-act="skip" aria-pressed="${st==="skip"}"
+          title="Skipped this">✕</button>
+      </div>
+    </div>`;
+  });
+  if (!nowDrawn) spine += `<div class="nowline"><span class="ln"></span><span class="tx mono">END OF PLAN</span></div>`;
+
+  const habitsToday = S.cfg.habits.filter(h => h.days.includes(dow));
+  const habitRows = habitsToday.map(h => {
+    const on = isChecked(h.id, date), st = streak(h);
+    return `<div class="habit" style="--hue:var(${trackVar(h.track)})">
+      <button class="box" data-habit="${h.id}" aria-pressed="${on}" aria-label="${esc(h.name)}">✓</button>
+      <span class="nm">${esc(h.name)}</span>
+      <span class="stk">${st ? st + (st===1?" day":" days") : "—"}</span>
+    </div>`;
+  }).join("");
+
+  const top = S.tasks.items
+    .filter(t => !t.done && ["overdue","today"].includes(taskBucket(t)))
+    .sort((a,b) => (a.p-b.p) || String(a.due).localeCompare(String(b.due)))
+    .slice(0,3);
+
+  const bible = bibleCard();
+
+  return `
+  ${isSun ? `<div class="sabbath" style="margin-top:18px">
+      <div class="eyebrow">Sunday</div>
+      <p class="q">Rest is the plan today. Church, people, sleep — and nothing from the backlog.</p>
+      <p class="muted" style="font-size:13px;margin-top:6px">If something truly cannot wait, log it so
+      Saturday's review can tell you why it landed here.</p>
+    </div>` : ""}
+
+  <h2 class="sect-title">${DAYNAME[dow]}${isSun?"" : " — one deep block, not five"}</h2>
+  <p class="sect-sub">${planned ? hm(planned)+" planned · "+done.length+" of "+blocks.length+" blocks done · "+hm(loggedToday)+" logged" : "No rhythm set for today."}</p>
+
+  <div class="two">
+    <div class="grid">
+      <div class="onething">
+        <div class="eyebrow">If today only has room for one thing</div>
+        <input id="onething" value="${esc(rec.one)}" placeholder="Write it here. One sentence."
+          aria-label="The one thing that matters today">
+      </div>
+      <div class="spine">${spine || `<div class="empty">Nothing scheduled. Add blocks in Setup.</div>`}</div>
+    </div>
+
+    <div class="grid">
+      ${timerCard()}
+      <div class="card">
+        <div class="card-h"><h2>Today's checks</h2><span class="grow"></span>
+          <span class="dim mono" style="font-size:11px">STREAK</span></div>
+        <div class="habits">${habitRows}</div>
+      </div>
+      ${bible}
+      <div class="card">
+        <div class="card-h"><h2>Must move today</h2></div>
+        ${top.length ? `<div class="tl">${top.map(taskRow).join("")}</div>`
+          : `<div class="empty">Nothing due today. Pull one thing forward from the backlog rather than inventing work.</div>`}
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Close the day</h2></div>
+        <div class="row" style="gap:6px;margin-bottom:10px">
+          <span class="dim" style="font-size:12.5px;margin-right:4px">Energy</span>
+          ${[1,2,3,4,5].map(n => `<button class="chip" data-energy="${n}"
+            aria-pressed="${rec.energy===n}">${n}</button>`).join("")}
+        </div>
+        <textarea id="daynote" rows="2" style="width:100%" placeholder="One line: what actually happened today?"
+          aria-label="Note about today">${esc(rec.note)}</textarea>
+      </div>
+    </div>
+  </div>`;
+}
+
+function bibleCard(){
+  const bp = S.cfg.bible;
+  const elapsedDays = Math.max(0, daysBetween(bp.start, ymd(new Date())) + 1);
+  const targetDay = Math.min(bp.total, elapsedDays);
+  const behind = Math.max(0, targetDay - bp.day);
+  // at r readings a day the target also advances 1 a day, so the gap closes at (r-1)/day
+  const closeIn = r => Math.ceil(behind / (r - 1));
+  return `<div class="card" style="border-left:3px solid var(--d-faith)">
+    <div class="card-h"><h2>Bible plan</h2><span class="grow"></span>
+      <span class="mono dim" style="font-size:11px">${bp.total}-DAY</span></div>
+    <div class="row" style="gap:10px;align-items:baseline">
+      <span class="mono" style="font-size:26px;font-weight:600">${bp.day}</span>
+      <span class="muted" style="font-size:13px">of ${bp.total} readings done</span>
+    </div>
+    <div class="meter" style="--stripe:var(--d-faith)">
+      <div class="fill" style="width:${Math.min(100, bp.day/bp.total*100)}%"></div>
+      <div class="ctgt" style="left:${Math.min(100, targetDay/bp.total*100)}%"></div>
+    </div>
+    <p class="muted" style="font-size:13px;margin-top:9px">
+      ${behind === 0
+        ? "You are on pace. One a day holds it."
+        : `<b>${behind} ${behind===1?"reading":"readings"} behind.</b>
+           Two a day closes the gap in ${closeIn(2)} days; three a day in ${closeIn(3)}.
+           ${behind > 60 ? "If neither of those is real, move the plan start to today in Setup and keep a streak instead of a deficit." : ""}`}
+    </p>
+    <div class="row" style="margin-top:11px">
+      <button class="btn sm" data-bible="1">+1 reading</button>
+      <button class="btn sm" data-bible="2">+2</button>
+      <button class="btn sm ghost" data-bible="-1">−1</button>
+      <label class="dim" style="font-size:12px;margin-left:auto">at reading
+        <input id="bibleday" class="mono" type="number" min="0" max="${bp.total}" value="${bp.day}"
+          style="width:68px;padding:4px 6px" aria-label="Current reading number"></label>
+    </div>
+  </div>`;
+}
+
+function timerCard(){
+  const t = S.timer && S.timer.startedAt ? S.timer : null;
+  const el = t ? Math.floor((Date.now() - t.startedAt) / 1000) : 0;
+  const disp = t
+    ? pad(Math.floor(el/3600)) + ":" + pad(Math.floor(el/60)%60) + ":" + pad(el%60)
+    : "00:00:00";
+  const opts = S.cfg.tracks.map(k =>
+    `<option value="${k.id}" ${t && t.track===k.id ? "selected":""}>${esc(k.name)}</option>`).join("");
+  return `<div class="card">
+    <div class="card-h"><h2>Log time</h2><span class="grow"></span>
+      <span class="pill" ${t?'style="color:var(--accent);border-color:var(--accent)"':""}>${t?"running":"idle"}</span></div>
+    <div class="timer">
+      <div class="disp ${t?"":"idle"}" id="tdisp">${disp}</div>
+      ${t ? `<div class="muted" style="font-size:13px">${esc(t.label || track(t.track).name)}</div>` : ""}
+      <div class="row">
+        <select id="tsel" aria-label="Which track">${opts}</select>
+        ${t ? `<button class="btn primary" id="tstop">Stop &amp; log</button>
+               <button class="btn ghost" id="tcancel">Discard</button>`
+            : `<button class="btn primary" id="tstart">Start</button>`}
+      </div>
+      <div class="row" style="border-top:1px solid var(--border);padding-top:10px">
+        <span class="dim" style="font-size:12px;margin-right:2px">Add without a timer</span>
+        ${[15,30,60,120].map(m => `<button class="chip" data-quick="${m}">+${m<60?m+"m":(m/60)+"h"}</button>`).join("")}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ═══ THE WEEK ═══════════════════════════════════════════════════════════ */
+function viewWeek(){
+  const mon = mondayOf(new Date()), todayKey = ymd(new Date());
+  const cards = MONSUN.map((dow,i) => {
+    const date = ymd(addDays(mon, i));
+    const blocks = (S.cfg.rhythm[dow] || []).filter(b => b.track !== "rest" || dur(b) >= 60);
+    const hrs = (S.cfg.rhythm[dow] || []).reduce((s,b) => s + dur(b), 0);
+    return `<div class="day ${date===todayKey?"is-today":""} ${dow===0?"sun":""}">
+      <div class="dh"><span class="dn">${DAYSHORT[dow]}</span>
+        <span class="dd">${parseYmd(date).getDate()}</span></div>
+      ${blocks.map(b => `<div class="wb" style="--stripe:var(${trackVar(b.track)})">
+          <div class="s"></div>
+          <div><span class="tm">${clock12(b.start)}–${clock12(b.end)}</span>${esc(b.label)}</div>
+        </div>`).join("")}
+      <div class="dim mono" style="font-size:10px;margin-top:auto;padding-top:6px">${hm(hrs)} planned</div>
+    </div>`;
+  }).join("");
+
+  const anchors = [
+    ["Monday 4:00p",  "Startup advisory call",    "startup"],
+    ["Monday 7:15p",  "Billing submitted",        "contract"],
+    ["Wednesday 5p",  "CEO check-in — report and slides ready",  "contract"],
+    ["Friday 4:00p",  "Advisor research meeting", "advres"],
+    ["Saturday 7:30p","Weekly review",            "rest"],
+    ["Sunday",        "Rest. Nothing from the backlog.", "faith"],
+  ];
+
+  return `
+  <h2 class="sect-title">The shape of the week</h2>
+  <p class="sect-sub">Five fixed commitments, one deep block an evening, billing bulk moved to Saturday so
+  Monday is a finish-and-submit job instead of a six-hour emergency. Sunday holds nothing.</p>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-h"><h2>Immovable</h2><span class="grow"></span>
+      <span class="eyebrow">Everything else bends around these</span></div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:10px">
+      ${anchors.map(([w,what,k]) => `<div class="row" style="gap:9px;align-items:flex-start">
+        <span class="dot" style="background:var(${trackVar(k)});margin-top:5px"></span>
+        <div><div class="mono" style="font-size:11px;color:var(--ink-3)">${w.toUpperCase()}</div>
+        <div style="font-size:13.5px;font-weight:600">${esc(what)}</div></div></div>`).join("")}
+    </div>
+  </div>
+
+  <div class="wk">${cards}</div>
+
+  <div class="legend" style="margin-top:16px">
+    ${DOMAINS.map(d => `<span><i style="background:var(${d.v})"></i>${d.name}</span>`).join("")}
+  </div>`;
+}
+
+/* ═══ TRACKS ═════════════════════════════════════════════════════════════ */
+function viewTracks(){
+  const mon = mondayOf(new Date());
+  const weekDates = Array.from({length:7}, (_,i) => ymd(addDays(mon,i)));
+  const loggedBy = {}, plannedBy = {};
+  S.week.entries.forEach(e => { loggedBy[e.track] = (loggedBy[e.track]||0) + e.min; });
+  MONSUN.forEach(dow => (S.cfg.rhythm[dow]||[]).forEach(b => {
+    plannedBy[b.track] = (plannedBy[b.track]||0) + dur(b);
+  }));
+
+  const byDom = DOMAINS.map(d => {
+    const rows = S.cfg.tracks.filter(t => t.dom === d.id).map(t => {
+      const lg = loggedBy[t.id] || 0, tg = t.target*60;
+      const openTasks = S.tasks.items.filter(x => !x.done && x.k === t.id).length;
+      return `<div class="trk" style="--stripe:var(${d.v})">
+        <div class="stripe"></div>
+        <div class="in">
+          <div class="top">
+            <span class="nm">${esc(t.name)}</span>
+            <span class="num" data-tip="Logged <b class='tk'>${hm(lg)}</b> of a <b class='tk'>${hm(tg)}</b> target this week">${hm(lg)} / ${hm(tg)}</span>
+          </div>
+          <div class="meter"><div class="fill" style="width:${tg?Math.min(100, lg/tg*100):0}%"></div>
+            ${plannedBy[t.id]&&tg ? `<div class="ctgt" style="left:${Math.min(100, plannedBy[t.id]/tg*100)}%"></div>`:""}</div>
+          <div class="next"><b>Next:</b> ${esc(t.next || "—")}
+            ${openTasks ? `<span class="pill" style="margin-left:7px">${openTasks} open</span>`:""}</div>
+        </div>
+      </div>`;
+    }).join("");
+    return `<h3 class="eyebrow" style="margin:22px 0 9px;display:flex;align-items:center;gap:8px">
+        <span class="dot" style="background:var(${d.v})"></span>${d.name}</h3>
+      <div class="grid" style="gap:8px">${rows}</div>`;
+  }).join("");
+
+  return `<h2 class="sect-title">Eleven tracks, four domains</h2>
+  <p class="sect-sub">The bar is what you logged this week; the thin mark is what the rhythm planned for it.
+  A track with no logged time for two weeks is a track to drop, finish, or hand off — not a track to feel guilty about.</p>
+  ${byDom}`;
+}
+
+/* ═══ BACKLOG ════════════════════════════════════════════════════════════ */
+function taskRow(t){
+  const b = taskBucket(t);
+  return `<div class="task ${t.done?"done":""}" style="--stripe:var(${trackVar(t.k)})">
+    <button class="box" data-task="${t.id}" aria-pressed="${!!t.done}" style="--hue:var(${trackVar(t.k)})"
+      aria-label="Done: ${esc(t.t)}">✓</button>
+    <div class="grow">
+      <div class="tt">${esc(t.t)}</div>
+      <div class="sub">
+        <span><span class="dot" style="background:var(${trackVar(t.k)});display:inline-block;vertical-align:-1px"></span>
+          ${esc(track(t.k).name)}</span>
+        ${t.est ? `<span class="mono">${hm(t.est)}</span>`:""}
+        ${t.due ? `<span class="${b==="overdue"?"pill over":"mono"}">${b==="overdue"?"Overdue · ":""}${
+          parseYmd(t.due).toLocaleDateString(undefined,{month:"short",day:"numeric"})}</span>`:""}
+        <span>${PRIO[t.p]||""}</span>
+      </div>
+    </div>
+    <button class="xbtn" data-del="${t.id}" aria-label="Delete task">×</button>
+  </div>`;
+}
+
+function viewTasks(){
+  const groups = [["overdue","Overdue"],["today","Today"],["week","Rest of this week"],
+                  ["later","Later"],["done","Done"]];
+  const items = S.tasks.items.slice().sort((a,b) =>
+    (a.p-b.p) || String(a.due||"9").localeCompare(String(b.due||"9")));
+  const opts = S.cfg.tracks.map(k => `<option value="${k.id}">${esc(k.name)}</option>`).join("");
+
+  const body = groups.map(([g,label]) => {
+    const list = items.filter(t => taskBucket(t) === g);
+    if (!list.length) return "";
+    const mins = list.reduce((s,t) => s + (t.est||0), 0);
+    return `<div style="margin-top:18px">
+      <div class="row" style="margin-bottom:8px">
+        <span class="eyebrow">${label}</span>
+        <span class="mono dim" style="font-size:11px">${list.length} · ${hm(mins)}</span>
+      </div>
+      <div class="tl">${list.map(taskRow).join("")}</div>
+    </div>`;
+  }).join("");
+
+  const openMins = items.filter(t => !t.done).reduce((s,t) => s + (t.est||0), 0);
+
+  return `<h2 class="sect-title">Backlog</h2>
+  <p class="sect-sub">Everything you are carrying, written down so you stop carrying it in your head.
+  ${openMins ? `Open work adds up to <b>${hm(openMins)}</b> — about ${(openMins/60/6).toFixed(1)} evenings of deep work.`:""}</p>
+
+  <div class="card">
+    <div class="addbar">
+      <input id="nt" placeholder="What needs doing?" aria-label="Task">
+      <select id="nk" aria-label="Track">${opts}</select>
+      <input id="nd" type="date" aria-label="Due date">
+      <input id="ne" type="number" min="0" step="15" placeholder="min" class="mono" aria-label="Estimate in minutes">
+      <button class="btn primary" id="nadd">Add</button>
+    </div>
+    <div class="row" style="margin-top:9px">
+      <span class="dim" style="font-size:12px">Priority</span>
+      ${[1,2,3].map(p => `<button class="chip" data-prio="${p}" aria-pressed="${p===2}">${PRIO[p]}</button>`).join("")}
+    </div>
+  </div>
+  ${body || `<div class="empty" style="margin-top:18px">Backlog is empty.</div>`}`;
+}
+
+/* ═══ TIME LOG ═══════════════════════════════════════════════════════════ */
+function viewLog(){
+  const mon = mondayOf(addDays(new Date(), -7*S.offset));
+  const days = Array.from({length:7}, (_,i) => ymd(addDays(mon,i)));
+  const opts = S.cfg.tracks.map(k => `<option value="${k.id}">${esc(k.name)}</option>`).join("");
+
+  const rows = days.map(d => {
+    const list = entriesOn(d);
+    const tot = list.reduce((s,e) => s + e.min, 0);
+    return `<div style="margin-top:16px">
+      <div class="row" style="margin-bottom:7px">
+        <span class="eyebrow">${DAYSHORT[parseYmd(d).getDay()]} ${parseYmd(d).getDate()}</span>
+        <span class="mono dim" style="font-size:11px">${tot?hm(tot):"nothing logged"}</span>
+      </div>
+      ${list.length ? `<div class="tl">${list.map(e => `
+        <div class="task" style="--stripe:var(${trackVar(e.track)})">
+          <div class="grow"><div class="tt">${esc(e.label)}</div>
+            <div class="sub"><span>${esc(track(e.track).name)}</span></div></div>
+          <span class="mono" style="font-size:13px;font-weight:600">${hm(e.min)}</span>
+          <button class="xbtn" data-delentry="${e.id}" aria-label="Delete entry">×</button>
+        </div>`).join("")}</div>` : ""}
+    </div>`;
+  }).join("");
+
+  const total = S.week.entries.reduce((s,e) => s + e.min, 0);
+
+  return `<h2 class="sect-title">Time log</h2>
+  <p class="sect-sub">Logging is the whole point — the report can only show you what you tell it.
+  Thirty seconds a night is enough.</p>
+
+  <div class="row" style="margin-bottom:14px">
+    <button class="btn sm" id="prevw">← Earlier week</button>
+    <span class="mono" style="font-size:13px;font-weight:600">${S.weekKey}</span>
+    <button class="btn sm" id="nextw" ${S.offset===0?"disabled":""}>Later week →</button>
+    <span class="grow"></span>
+    <span class="mono dim" style="font-size:12px">${hm(total)} logged</span>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h2>Add an entry by hand</h2></div>
+    <div class="addbar" style="grid-template-columns:minmax(0,1fr) 170px 140px 72px auto">
+      <input id="et" placeholder="What were you doing?" aria-label="Entry label">
+      <select id="ek" aria-label="Track">${opts}</select>
+      <input id="ed" type="date" value="${ymd(new Date())}" aria-label="Date">
+      <input id="em" type="number" min="5" step="5" placeholder="min" class="mono" aria-label="Minutes">
+      <button class="btn primary" id="eadd">Log</button>
+    </div>
+  </div>
+  ${rows}`;
+}
+
+/* ═══ WEEKLY REPORT ══════════════════════════════════════════════════════ */
+function reportData(){
+  const mon = mondayOf(addDays(new Date(), -7*S.offset));
+  const days = Array.from({length:7}, (_,i) => ymd(addDays(mon,i)));
+  const today = ymd(new Date());
+  const elapsed = days.filter(d => d <= today);
+
+  const logged = {}, planned = {};
+  S.week.entries.forEach(e => { logged[e.track] = (logged[e.track]||0) + e.min; });
+  days.forEach((d,i) => (S.cfg.rhythm[MONSUN[i]]||[]).forEach(b => {
+    planned[b.track] = (planned[b.track]||0) + dur(b);
+  }));
+
+  const rows = S.cfg.tracks.map(t => ({
+    id:t.id, name:t.name, dom:t.dom, logged:logged[t.id]||0,
+    planned:planned[t.id]||0, target:t.target*60,
+  })).sort((a,b) => b.logged - a.logged || b.planned - a.planned);
+
+  let blocksDue = 0, blocksDone = 0;
+  elapsed.forEach((d,i) => {
+    const list = S.cfg.rhythm[MONSUN[i]] || [];
+    const rec = S.week.days[d] || { blocks:{} };
+    list.forEach((b,bi) => { blocksDue++; if (rec.blocks[bi] === "done") blocksDone++; });
+  });
+
+  const habitRows = S.cfg.habits.map(h => {
+    const cells = days.map(d => ({
+      d, due: h.days.includes(parseYmd(d).getDay()),
+      on: isChecked(h.id, d), future: d > today,
+    }));
+    const due = cells.filter(c => c.due && !c.future).length;
+    const hit = cells.filter(c => c.due && c.on).length;
+    return { h, cells, due, hit };
+  });
+
+  const totalLogged = rows.reduce((s,r) => s + r.logged, 0);
+  const energy = elapsed.map(d => (S.week.days[d]||{}).energy || 0).filter(Boolean);
+  const tasksDone = S.tasks.items.filter(t => t.done && t.doneAt && days.includes(t.doneAt)).length;
+  const overdue = S.tasks.items.filter(t => taskBucket(t) === "overdue").length;
+
+  return { days, elapsed, rows, blocksDue, blocksDone, habitRows, totalLogged, energy,
+           tasksDone, overdue, today };
+}
+
+function narrate(R){
+  const real = R.rows.filter(r => r.logged > 0);
+  if (!real.length) return "Nothing is logged for this week yet. Tick a block on Today, or add one entry by hand — the report is only as honest as the log.";
+  const top = real[0];
+  const starved = R.rows.filter(r => r.target > 0 && r.logged < r.target*0.34)
+    .sort((a,b) => (b.target-b.logged) - (a.target-a.logged)).slice(0,2);
+  const faith = R.habitRows.filter(x => x.h.track === "faith");
+  const faithDue = faith.reduce((s,x) => s + x.due, 0);
+  const faithHit = faith.reduce((s,x) => s + x.hit, 0);
+  const adherence = R.blocksDue ? Math.round(R.blocksDone / R.blocksDue * 100) : 0;
+  const avgE = R.energy.length ? (R.energy.reduce((a,b)=>a+b,0)/R.energy.length) : 0;
+
+  const bits = [];
+  bits.push(`You logged <b>${hm(R.totalLogged)}</b> this week, and <b>${esc(top.name)}</b> took the biggest share at ${hm(top.logged)}.`);
+  bits.push(`You kept <b>${adherence}%</b> of the blocks you planned${adherence >= 70 ? " — that is a working week, not a lucky one." : adherence >= 40 ? ", which means the plan is roughly right but the evenings are losing." : ". The plan is currently fiction; cut it down rather than trying harder."}`);
+  if (faithDue) bits.push(`On the part you said matters most: <b>${faithHit} of ${faithDue}</b> faith checks. ${faithHit/faithDue >= 0.7 ? "Hold that." : "Move it to before the day can take it."}`);
+  if (starved.length) bits.push(`<b>${starved.map(s => esc(s.name)).join("</b> and <b>")}</b> got almost nothing. ${starved.length > 1 ? "Pick one" : "Give it"} a single named block next week — not “when I have time.”`);
+  if (R.overdue) bits.push(`<b>${R.overdue}</b> ${R.overdue===1?"task is":"tasks are"} overdue. Reschedule ${R.overdue===1?"it":"them"} on purpose or delete ${R.overdue===1?"it":"them"}; a permanently-late list stops meaning anything.`);
+  if (avgE) bits.push(`Average energy was <b>${avgE.toFixed(1)} of 5</b>${avgE < 3 ? " — this is the number to watch before you push harder on anything else." : "."}`);
+  return bits.join(" ");
+}
+
+function viewReport(){
+  const R = reportData();
+  const max = Math.max(60, ...R.rows.map(r => Math.max(r.logged, r.planned)));
+  const scaleMax = Math.ceil(max/60/2)*120;
+
+  const chart = R.rows.filter(r => r.logged > 0 || r.planned > 0).map(r => `
+    <div class="crow" style="--stripe:var(${domVar(r.dom)})">
+      <div class="clbl"><span class="dot" style="background:var(${domVar(r.dom)})"></span><span>${esc(r.name)}</span></div>
+      <div class="ctrack" data-tip="<b>${esc(r.name)}</b><br>logged <span class='tk'>${hm(r.logged)}</span> · planned <span class='tk'>${hm(r.planned)}</span> · target <span class='tk'>${hm(r.target)}</span>">
+        <div class="cbar ${r.logged?"":"zero"}" style="width:${Math.max(0.4, r.logged/scaleMax*100)}%"></div>
+        ${r.planned ? `<div class="ctgt" style="left:${Math.min(100, r.planned/scaleMax*100)}%"></div>`:""}
+      </div>
+      <div class="cval">${hm(r.logged)}</div>
+    </div>`).join("");
+
+  const hmGrid = `<div class="hm">
+    <div></div>${R.days.map(d => `<div class="hd">${DAYSHORT[parseYmd(d).getDay()][0]}</div>`).join("")}<div></div>
+    ${R.habitRows.map(x => `
+      <div class="rl">${esc(x.h.name)}</div>
+      ${x.cells.map(c => c.due
+        ? `<div class="cell ${c.on?"on":""} ${c.future&&!c.on?"future":""}" style="--hue:var(${trackVar(x.h.track)})"
+             data-tip="<b>${esc(x.h.name)}</b><br>${DAYSHORT[parseYmd(c.d).getDay()]} · ${c.on?"done":c.future?"upcoming":"missed"}"></div>`
+        : `<div></div>`).join("")}
+      <div class="rn">${x.due ? x.hit+"/"+x.due : "—"}</div>`).join("")}
+  </div>`;
+
+  const table = `<div class="scroll-x"><table class="data">
+    <thead><tr><th>Track</th><th>Domain</th><th class="n">Logged</th><th class="n">Planned</th><th class="n">Target</th></tr></thead>
+    <tbody>${R.rows.map(r => `<tr><td>${esc(r.name)}</td><td class="muted">${domName(r.dom)}</td>
+      <td class="n">${hm(r.logged)}</td><td class="n">${hm(r.planned)}</td><td class="n">${hm(r.target)}</td></tr>`).join("")}
+    </tbody></table></div>`;
+
+  const adherence = R.blocksDue ? Math.round(R.blocksDone/R.blocksDue*100) : 0;
+  const faith = R.habitRows.filter(x => x.h.track === "faith");
+  const fd = faith.reduce((s,x)=>s+x.due,0), fh = faith.reduce((s,x)=>s+x.hit,0);
+
+  return `<h2 class="sect-title">Week of ${parseYmd(R.days[0]).toLocaleDateString(undefined,{month:"long",day:"numeric"})}</h2>
+  <p class="sect-sub">Read this on Saturday evening. It answers one question: where did the week actually go?</p>
+
+  <div class="row" style="margin-bottom:16px">
+    <button class="btn sm" id="prevw">← Earlier week</button>
+    <span class="mono" style="font-size:13px;font-weight:600">${S.weekKey}</span>
+    <button class="btn sm" id="nextw" ${S.offset===0?"disabled":""}>Later week →</button>
+  </div>
+
+  <div class="stats" style="margin-bottom:20px">
+    <div class="stat"><div class="k">${(R.totalLogged/60).toFixed(1)}</div><div class="l">hours logged</div></div>
+    <div class="stat"><div class="k">${adherence}%</div><div class="l">planned blocks kept</div></div>
+    <div class="stat"><div class="k">${fd?fh+"/"+fd:"—"}</div><div class="l">faith checks</div></div>
+    <div class="stat"><div class="k">${R.tasksDone}</div><div class="l">tasks finished</div></div>
+    <div class="stat"><div class="k" style="${R.overdue?"color:var(--critical)":""}">${R.overdue}</div><div class="l">overdue</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-h"><h2>Where the time went</h2><span class="grow"></span>
+      <button class="btn sm ghost" id="tbl">${S.showTable?"Show chart":"Show as table"}</button></div>
+    ${S.showTable ? table : (chart ? `<div class="chart">${chart}
+        <div class="caxis"><span>0h</span><span>${(scaleMax/120).toFixed(0)}h</span><span>${(scaleMax/60).toFixed(0)}h</span></div>
+      </div>
+      <div class="legend" style="margin-top:12px">
+        ${DOMAINS.map(d => `<span><i style="background:var(${d.v})"></i>${d.name}</span>`).join("")}
+        <span><i style="background:var(--ink-3);width:2px;height:12px;border-radius:2px"></i>what the rhythm planned</span>
+      </div>` : `<div class="empty">No time logged for this week. The chart fills in as you log.</div>`)}
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-h"><h2>The things that keep you standing</h2><span class="grow"></span>
+      <span class="eyebrow">Hit / due</span></div>
+    ${hmGrid}
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h2>What this week is telling you</h2><span class="grow"></span>
+      <button class="btn sm ghost" id="reflect">Ask for a reflection</button></div>
+    <div class="narr" id="narrbox"><p>${narrate(R)}</p>${
+      S.narrative ? `<p style="border-top:1px solid var(--border);padding-top:.7em">${esc(S.narrative)}</p>` : ""}</div>
+  </div>`;
+}
+
+/* ═══ SETUP ══════════════════════════════════════════════════════════════ */
+function viewSetup(){
+  return `<h2 class="sect-title">Setup</h2>
+  <p class="sect-sub">The rhythm is meant to be edited. When a week proves a block wrong, change the block —
+  don't just fail it again next week.</p>
+
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+    <div class="card">
+      <div class="card-h"><h2>Weekly targets</h2></div>
+      <div class="kv">${S.cfg.tracks.map(t => `
+        <label for="tg-${t.id}" style="display:flex;gap:8px;align-items:center">
+          <span class="dot" style="background:var(${trackVar(t.id)})"></span>${esc(t.name)}</label>
+        <input id="tg-${t.id}" class="mono" type="number" min="0" step="0.5" value="${t.target}"
+          data-target="${t.id}" aria-label="${esc(t.name)} hours per week">`).join("")}
+      </div>
+      <p class="dim" style="font-size:12px;margin-top:10px">Hours per week. They should add up to something a human can survive
+        — ${(S.cfg.tracks.reduce((s,t)=>s+t.target,0)).toFixed(1)}h of 168 right now.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Bible plan</h2></div>
+      <div class="kv">
+        <label for="bstart">Plan started</label>
+        <input id="bstart" type="date" value="${esc(S.cfg.bible.start)}">
+        <label for="btotal">Readings in the plan</label>
+        <input id="btotal" class="mono" type="number" min="1" value="${S.cfg.bible.total}">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Your data</h2></div>
+      <p class="muted" style="font-size:13.5px">Everything lives ${Store.mode==="db"
+        ? "in this app's private store, tied to your account."
+        : "in this browser only — nothing has been sent anywhere."} Export before you clear anything.</p>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="exp">Export everything</button>
+        <button class="btn ghost" id="imp">Import a backup</button>
+      </div>
+      <input type="file" id="impf" accept="application/json" class="sr">
+    </div>
+  </div>
+
+  <div class="card setup" style="margin-top:16px">
+    <div class="card-h"><h2>The rhythm</h2><span class="grow"></span>
+      <span class="eyebrow">0 = Sunday · times are 24h</span></div>
+    <p class="muted" style="font-size:13.5px;margin-bottom:10px">Each block is
+      <span class="mono">{"start","end","label","track"}</span>. Track ids:
+      <span class="mono">${S.cfg.tracks.map(t=>t.id).join(", ")}</span>.</p>
+    <textarea id="rhy" spellcheck="false" aria-label="Weekly rhythm as JSON">${esc(JSON.stringify(S.cfg.rhythm,null,1))}</textarea>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="rsave">Save rhythm</button>
+      <button class="btn ghost" id="rreset">Reset to the starting plan</button>
+      <span id="rmsg" class="dim" style="font-size:12.5px"></span>
+    </div>
+  </div>`;
+}
+
+/* ═══ RENDER + WIRING ════════════════════════════════════════════════════ */
+const VIEWS = { today:viewToday, week:viewWeek, tracks:viewTracks, tasks:viewTasks,
+                log:viewLog, report:viewReport, setup:viewSetup };
+
+function render(){
+  renderTabs(); stamp();
+  const v = $("#view");
+  v.innerHTML = (VIEWS[S.tab] || viewToday)();
+  wire(v);
+  bindTips(v);
+}
+
+let newPrio = 2;
+
+function wire(root){
+  const date = ymd(new Date());
+
+  /* rhythm blocks */
+  $$("[data-blk]", root).forEach(b => b.onclick = () => {
+    const i = +b.dataset.blk, act = b.dataset.act;
+    const rec = dayRec(date), blocks = S.cfg.rhythm[new Date().getDay()] || [];
+    const was = rec.blocks[i];
+    if (was === act) delete rec.blocks[i]; else rec.blocks[i] = act;
+    if (act === "done" && was !== "done") {
+      const blk = blocks[i];
+      if (blk) { addEntry(blk.track, dur(blk), blk.label, date); toast("Logged " + hm(dur(blk)) + " — " + blk.label); }
+    }
+    saveWeek(); render();
+  });
+
+  /* habits */
+  $$("[data-habit]", root).forEach(b => b.onclick = () => {
+    toggleHabit(b.dataset.habit, date); render();
+  });
+
+  /* one thing / note / energy */
+  const ot = $("#onething", root);
+  if (ot) ot.onchange = () => { dayRec(date).one = ot.value.trim(); saveWeek(); toast("Saved"); };
+  const dn = $("#daynote", root);
+  if (dn) dn.onchange = () => { dayRec(date).note = dn.value.trim(); saveWeek(); toast("Saved"); };
+  $$("[data-energy]", root).forEach(b => b.onclick = () => {
+    const rec = dayRec(date), n = +b.dataset.energy;
+    rec.energy = rec.energy === n ? 0 : n; saveWeek(); render();
+  });
+
+  /* bible */
+  $$("[data-bible]", root).forEach(b => b.onclick = () => {
+    S.cfg.bible.day = Math.max(0, Math.min(S.cfg.bible.total, S.cfg.bible.day + (+b.dataset.bible)));
+    if (+b.dataset.bible > 0) { toggleOn("bible", date); toggleOn("quiet", date); }
+    saveCfg(); render();
+  });
+  const bd = $("#bibleday", root);
+  if (bd) bd.onchange = () => {
+    S.cfg.bible.day = Math.max(0, Math.min(S.cfg.bible.total, +bd.value || 0)); saveCfg(); render();
+  };
+
+  /* timer */
+  const tstart = $("#tstart", root);
+  if (tstart) tstart.onclick = () => {
+    const k = $("#tsel", root).value;
+    S.timer = { track:k, label:track(k).name, startedAt:Date.now() };
+    saveTimer(); render();
+  };
+  const tstop = $("#tstop", root);
+  if (tstop) tstop.onclick = () => {
+    const min = Math.max(1, Math.round((Date.now() - S.timer.startedAt)/60000));
+    addEntry(S.timer.track, min, S.timer.label, date);
+    toast("Logged " + hm(min) + " to " + track(S.timer.track).name);
+    S.timer = null; saveTimer(); render();
+  };
+  const tcancel = $("#tcancel", root);
+  if (tcancel) tcancel.onclick = () => { S.timer = null; saveTimer(); render(); };
+  $$("[data-quick]", root).forEach(b => b.onclick = () => {
+    const k = $("#tsel", root).value, m = +b.dataset.quick;
+    addEntry(k, m, track(k).name, date);
+    toast("Logged " + hm(m) + " to " + track(k).name); render();
+  });
+
+  /* tasks */
+  $$("[data-task]", root).forEach(b => b.onclick = () => {
+    const t = S.tasks.items.find(x => x.id === b.dataset.task);
+    if (!t) return;
+    t.done = !t.done; t.doneAt = t.done ? date : null;
+    saveTasks(); render();
+    if (t.done) toast("Done. That one is off your head.");
+  });
+  $$("[data-del]", root).forEach(b => b.onclick = () => {
+    S.tasks.items = S.tasks.items.filter(x => x.id !== b.dataset.del); saveTasks(); render();
+  });
+  $$("[data-prio]", root).forEach(b => b.onclick = () => {
+    newPrio = +b.dataset.prio;
+    $$("[data-prio]", root).forEach(x => x.setAttribute("aria-pressed", x === b));
+  });
+  const nadd = $("#nadd", root);
+  if (nadd) {
+    const add = () => {
+      const t = $("#nt", root).value.trim();
+      if (!t) { $("#nt", root).focus(); return; }
+      S.tasks.items.push({ id:Math.random().toString(36).slice(2,9), t, k:$("#nk",root).value,
+        due:$("#nd",root).value || "", est:+$("#ne",root).value || 0, p:newPrio, done:false });
+      saveTasks(); render();
+    };
+    nadd.onclick = add;
+    $("#nt", root).onkeydown = e => { if (e.key === "Enter") add(); };
+  }
+
+  /* log */
+  const eadd = $("#eadd", root);
+  if (eadd) eadd.onclick = () => {
+    const m = +$("#em", root).value;
+    if (!(m > 0)) { $("#em", root).focus(); return; }
+    addEntry($("#ek",root).value, m, $("#et",root).value.trim() || null, $("#ed",root).value);
+    toast("Logged " + hm(m)); render();
+  };
+  $$("[data-delentry]", root).forEach(b => b.onclick = () => {
+    S.week.entries = S.week.entries.filter(e => e.id !== b.dataset.delentry); saveWeek(); render();
+  });
+
+  /* week paging */
+  const pw = $("#prevw", root);
+  if (pw) pw.onclick = async () => {
+    S.offset++; S.narrative = "";
+    await loadWeek(weekKey(addDays(new Date(), -7*S.offset))); render();
+  };
+  const nw = $("#nextw", root);
+  if (nw) nw.onclick = async () => {
+    if (!S.offset) return;
+    S.offset--; S.narrative = "";
+    await loadWeek(weekKey(addDays(new Date(), -7*S.offset))); render();
+  };
+
+  /* report */
+  const tb = $("#tbl", root);
+  if (tb) tb.onclick = () => { S.showTable = !S.showTable; render(); };
+  const rf = $("#reflect", root);
+  if (rf) rf.onclick = () => askReflection(rf);
+
+  /* setup */
+  $$("[data-target]", root).forEach(inp => inp.onchange = () => {
+    const t = track(inp.dataset.target); t.target = Math.max(0, +inp.value || 0); saveCfg();
+    toast("Target updated");
+  });
+  const bs = $("#bstart", root);
+  if (bs) bs.onchange = () => { S.cfg.bible.start = bs.value; saveCfg(); };
+  const bt = $("#btotal", root);
+  if (bt) bt.onchange = () => { S.cfg.bible.total = Math.max(1, +bt.value || 365); saveCfg(); };
+  const rsave = $("#rsave", root);
+  if (rsave) rsave.onclick = () => {
+    try {
+      const parsed = JSON.parse($("#rhy", root).value);
+      for (const k of Object.keys(parsed)) {
+        if (!/^[0-6]$/.test(k)) throw new Error("day keys must be 0–6, got “" + k + "”");
+        if (!Array.isArray(parsed[k])) throw new Error("day " + k + " must be a list of blocks");
+        parsed[k].forEach(b => {
+          if (!/^\d{2}:\d{2}$/.test(b.start||"") || !/^\d{2}:\d{2}$/.test(b.end||""))
+            throw new Error("every block needs start and end as HH:MM");
+        });
+      }
+      S.cfg.rhythm = parsed; saveCfg();
+      $("#rmsg", root).textContent = "Saved."; toast("Rhythm saved"); render();
+    } catch (e) {
+      $("#rmsg", root).innerHTML = '<span style="color:var(--critical)">' + esc(e.message) + "</span>";
+    }
+  };
+  const rreset = $("#rreset", root);
+  if (rreset) rreset.onclick = () => {
+    S.cfg.rhythm = JSON.parse(JSON.stringify(SEED_RHYTHM)); saveCfg(); render(); toast("Back to the starting plan");
+  };
+  const exp = $("#exp", root);
+  if (exp) exp.onclick = doExport;
+  const imp = $("#imp", root);
+  if (imp) imp.onclick = () => $("#impf", root).click();
+  const impf = $("#impf", root);
+  if (impf) impf.onchange = () => doImport(impf.files[0]);
+}
+
+function toggleOn(habitId, date){
+  S.checks[habitId] = S.checks[habitId] || {};
+  S.checks[habitId][date] = 1; saveChecks();
+}
+
+/* ── reflection via the sample capability ──────────────────────────────── */
+async function askReflection(btn){
+  btn.disabled = true; btn.textContent = "Thinking…";
+  const sample = window.claude && window.claude.use ? await window.claude.use("sample") : null;
+  if (!sample) {
+    btn.disabled = false; btn.textContent = "Ask for a reflection";
+    toast("Reflections need the hosted version of this app.");
+    return;
+  }
+  const R = reportData();
+  const facts = {
+    hoursLogged: +(R.totalLogged/60).toFixed(1),
+    blocksKept: R.blocksDue ? Math.round(R.blocksDone/R.blocksDue*100) + "%" : "n/a",
+    // in the owner's own priority order, not by hours — the order is part of the signal
+    byTrack: S.cfg.tracks.map(t => R.rows.find(r => r.id === t.id))
+      .filter(r => r && (r.logged || r.target))
+      .map(r => ({ track:r.name, logged:+(r.logged/60).toFixed(1), target:r.target/60 })),
+    habits: R.habitRows.map(x => ({ habit:x.h.name, hit:x.hit, due:x.due })),
+    tasksFinished: R.tasksDone, tasksOverdue: R.overdue,
+    energyByDay: R.elapsed.map(d => (S.week.days[d]||{}).energy || null),
+    notes: R.elapsed.map(d => (S.week.days[d]||{}).note).filter(Boolean),
+  };
+  try {
+    const out = await sample(
+      "Below is one week from a personal time tracker. Each track has hours logged against a weekly " +
+      "target the owner set themselves; habits show hits against the days they were due. The owner is " +
+      "carrying more tracks than one week holds, and the tracks are listed in the owner's own priority " +
+      "order.\n\nWrite 3-5 sentences, second person, plain and warm but not soft. Name what " +
+      "the data actually shows, name the single thing to cut or move next week, and end with one concrete " +
+      "sentence to act on Monday. No lists, no headings, no preamble, no praise for logging. Use only the " +
+      "numbers given; invent nothing.\n\n" + JSON.stringify(facts),
+      { modelTier:"default", onText: ({ text }) => {
+          S.narrative = text;
+          const box = $("#narrbox");
+          if (box) {
+            let p = $("#liveref");
+            if (!p) { p = document.createElement("p"); p.id = "liveref";
+              p.style.cssText = "border-top:1px solid var(--border);padding-top:.7em"; box.appendChild(p); }
+            p.textContent = text;
+          }
+        } });
+    S.narrative = out.text; render();
+  } catch (e) {
+    btn.disabled = false; btn.textContent = "Ask for a reflection";
+    toast(e && e.code === "not_granted" ? "Reflections are turned off for this page."
+      : e && e.code === "rate_limited" ? "Too many requests — try again in a minute."
+      : "Could not get a reflection just now.");
+  }
+}
+
+/* ── export / import ───────────────────────────────────────────────────── */
+async function doExport(){
+  const weeks = {};
+  for (let i = 0; i < 26; i++) {
+    const k = weekKey(addDays(new Date(), -7*i));
+    const w = await Store.get("logs/" + k);
+    if (w) weeks[k] = w;
+  }
+  const blob = { app:"first-things-first", exported:new Date().toISOString(),
+                 config:S.cfg, tasks:S.tasks, checks:S.checks, weeks };
+  const json = JSON.stringify(blob, null, 2);
+  const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+  const name = "first-things-first-" + ymd(new Date()) + ".json";
+  if (dl) {
+    try { await dl.save({ filename:name, data:json }); toast("Exported"); return; } catch (_) {}
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([json], { type:"application/json" }));
+  a.download = name; a.click(); URL.revokeObjectURL(a.href);
+  toast("Exported");
+}
+
+function doImport(file){
+  if (!file) return;
+  const fr = new FileReader();
+  fr.onload = async () => {
+    try {
+      const b = JSON.parse(fr.result);
+      if (b.config) { S.cfg = b.config; await Store.set("app/config", S.cfg); }
+      if (b.tasks)  { S.tasks = b.tasks; await Store.set("app/tasks", S.tasks); }
+      if (b.checks) { S.checks = b.checks; await Store.set("app/checks", S.checks); }
+      if (b.weeks)  for (const k of Object.keys(b.weeks)) await Store.set("logs/" + k, b.weeks[k]);
+      await loadWeek(weekKey(new Date()));
+      render(); toast("Backup restored");
+    } catch (_) { toast("That file is not a First Things First backup."); }
+  };
+  fr.readAsText(file);
+}
+
+/* ── boot ──────────────────────────────────────────────────────────────── */
+async function boot(carried){
+  if (carried && carried.tab) { S.tab = carried.tab; S.offset = carried.offset || 0; }
+  render();                                  // paint immediately, local data
+
+  await Store.connect();
+
+  S.cfg = (await Store.get("app/config")) || null;
+  if (!S.cfg || !Array.isArray(S.cfg.tracks)) { S.cfg = SEED_CONFIG(); await Store.set("app/config", S.cfg); }
+  // forward-fill any track added after the user's config was written
+  SEED_TRACKS.forEach(st => { if (!S.cfg.tracks.some(t => t.id === st.id)) S.cfg.tracks.push({ ...st }); });
+  if (!S.cfg.habits) S.cfg.habits = SEED_HABITS.map(h => ({ ...h }));
+  if (!S.cfg.bible)  S.cfg.bible = SEED_CONFIG().bible;
+
+  const tk = await Store.get("app/tasks");
+  if (tk && Array.isArray(tk.items)) S.tasks = tk;
+  else {
+    S.tasks = { items: SEED_TASKS.map((s,i) => ({
+      id: Math.random().toString(36).slice(2,9), t:s.t, k:s.k, p:s.p, est:s.est,
+      due: ymd(addDays(new Date(), s.p === 1 ? 3 : s.p === 2 ? 10 : 24)), done:false })) };
+    await Store.set("app/tasks", S.tasks);
+  }
+
+  S.checks = (await Store.get("app/checks")) || {};
+  const tm = await Store.get("app/timer");
+  S.timer = tm && tm.startedAt ? tm : null;
+  await loadWeek(weekKey(new Date()));
+
+  render();
+  setInterval(() => {
+    const d = $("#tdisp");
+    if (d && S.timer && S.timer.startedAt) {
+      const el = Math.floor((Date.now() - S.timer.startedAt)/1000);
+      d.textContent = pad(Math.floor(el/3600)) + ":" + pad(Math.floor(el/60)%60) + ":" + pad(el%60);
+    }
+  }, 1000);
+  setInterval(() => { if (S.tab === "today") render(); }, 120000);
+}
+
+// carry view state across a republish
+if (window.claude && window.claude.hot) {
+  window.claude.hot.snapshot(() => ({ tab:S.tab, offset:S.offset }));
+}
+S.cfg = SEED_CONFIG();   // so the very first paint has a rhythm to draw
+if (window.claude && window.claude.hot && window.claude.hot.ready)
+  window.claude.hot.ready(boot);
+else boot((window.claude && window.claude.hot && window.claude.hot.data) || {});
+</script>
