@@ -12,21 +12,21 @@ hours really landed against what you planned.
 
 | View | Purpose |
 |---|---|
-| **Today** | The day as a timeline with a live "now" marker. One tap on a block logs its planned minutes to the right track. Daily checks with streaks, a stopwatch, a reading-plan pacer, and the three tasks that actually have to move. |
-| **The week** | The full Mon–Sun rhythm plus the immovable commitments everything else bends around. Sunday holds nothing. |
-| **Tracks** | Eleven tracks grouped into four domains. Each shows logged-vs-planned-vs-target for the week and one named next action. |
-| **Backlog** | Everything being carried, with track, due date, estimate, and priority. Totals convert to "about N evenings of deep work" so the list stops lying about capacity. |
-| **Time log** | Per-day entries for the week, with manual entry and week-by-week paging. |
-| **Weekly report** | Hours by track against the planned mark, a hit/due grid for the daily checks, plan adherence, energy, and a written read of what the week is telling you. |
-| **Setup** | Weekly hour targets, reading-plan position, the rhythm itself as editable JSON, and full export/import. |
+| **Today** | A day arc across the top — the whole day 5a–11p as one bar with a live now-pin — then the day as a timeline. One tap on a block logs its planned minutes to the right track. Daily checks with streaks, a stopwatch, a reading-plan pacer, and the three things that have to move. |
+| **Week** | The Mon–Sun rhythm, then where the week is going by domain and track by track: logged against target, with a notch for what the rhythm planned. |
+| **Backlog** | Everything being carried, with track, due date, estimate, and priority. Totals convert to "about N evenings" so the list stops lying about capacity. |
+| **Report** | Hours by track against the planned mark, a hit/due grid for the daily checks, plan adherence, energy, a written read of the week, and the week's raw log. |
+
+Setup lives behind the gear in the header, not in the tab bar: weekly hour targets,
+reading-plan position, the rhythm itself as editable JSON, and full export/import.
 
 ### Four domains
 
 Tracks roll up into four domains, each with its own hue: **God**, **Paid work**,
 **The PhD build**, **Life & body**. The categorical palette was validated for
-lightness band, chroma floor, colorblind separation, and contrast against both the
-light and dark chart surfaces; every bar is also directly labeled, so identity is
-never carried by color alone. A table view of the same numbers is one click away.
+lightness band, chroma floor, colorblind separation, and contrast against the chart
+surface; every bar is also directly labeled, so identity is never carried by color
+alone. A table view of the same numbers is one click away.
 
 ## Running it
 
@@ -78,12 +78,14 @@ the last 26 weeks. Import restores it. Do that before clearing browser data.
 Rendering is full-redraw on every change. At this data size that is faster to reason
 about than any diffing, and it removes a whole class of stale-view bugs.
 
-## Accessibility and theming
+## Look and accessibility
 
-Three theme states are handled: explicit light, explicit dark, and the unstamped
-system default, all driven from one token set defined on bare `:root`. Every control
-has a visible focus ring and an accessible label; toggles use `aria-pressed`; motion
-respects `prefers-reduced-motion`; numeric columns use tabular figures.
+One committed visual world — blush ground, soft pink accents, generous radii — driven
+from a single token set on `:root`, with `color-scheme: light` so native controls stay
+in the palette even on a dark OS. Fraunces (soft/wonk axes up) for display, Nunito Sans
+for text, DM Mono for time columns. Every control has a visible focus ring and an
+accessible label; toggles use `aria-pressed`; motion respects
+`prefers-reduced-motion`; numeric columns use tabular figures.
 
 ## License
 
