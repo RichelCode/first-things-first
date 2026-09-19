@@ -828,6 +828,7 @@ function timerCard(){
 function taskRow(t, inToday){
   if (S.editing === t.id) return taskEditor(t);
   const carried = !t.done && t.due && t.due < ymd(new Date());
+  const ahead = !t.done && t.due && t.due > ymd(new Date());
   const shown = !!S.open[t.id];
   return `<div class="item ${t.done?"done":""} ${t.d?"hasnote":""} ${!t.done&&t.s?"starred":""}"
     style="--c:var(${tv(t.k)})">
@@ -841,6 +842,8 @@ function taskRow(t, inToday){
         ${t.est?`<span class="mono">${hm(t.est)}</span>`:""}
         <span>${PRIO[t.p]||""}</span>
         ${carried?`<span class="tag">carried over</span>`:""}
+        ${ahead?`<span class="tag">${t.due === ymd(addDays(new Date(),1)) ? "tomorrow"
+          : parseYmd(t.due).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"})}</span>`:""}
         ${t.rep?`<span class="tag rep">↻ ${esc(repeatLabel(t))}</span>`:""}
         ${t.d?`<button class="disc" data-open="${t.id}" aria-expanded="${shown}">${
           shown?"hide details":"details"}</button>`:""}</div></div>
@@ -962,9 +965,13 @@ function viewBacklog(){
     .sort((a,b) => String(b.doneAt||"").localeCompare(String(a.doneAt||""))).slice(0,15);
   const mins = items.reduce((s,t) => s+(t.est||0), 0);
 
+  const ahead = S.tasks.items.filter(t => !t.done && t.due && t.due > ymd(new Date()))
+    .sort((a,b) => a.due.localeCompare(b.due) || a.p-b.p);
+
   return `<div class="h2"><h2>Backlog</h2>
     <span class="sub">${items.length ? items.length+" waiting · "+hm(mins)+" · about "
-      +(mins/240).toFixed(1)+" evenings" : "nothing waiting"}</span></div>
+      +(mins/240).toFixed(1)+" evenings" : "nothing waiting"}${
+      ahead.length ? " · "+ahead.length+" scheduled ahead" : ""}</span></div>
 
   ${dumpCard()}
 
@@ -979,6 +986,11 @@ function viewBacklog(){
     ${items.length ? `<div class="list">${items.map(t => taskRow(t,false)).join("")}</div>`
       : `<div class="empty">Nothing waiting. Everything you are carrying is either on today or finished.</div>`}
   </div>
+
+  ${ahead.length ? `<div style="margin-top:26px">
+    <div class="row" style="margin-bottom:10px"><span class="lab">Coming up</span>
+      <span class="dim" style="font-size:12px">already has a day — repeating tasks land here</span></div>
+    <div class="list">${ahead.map(t => taskRow(t,false)).join("")}</div></div>` : ""}
 
   ${done.length ? `<div style="margin-top:26px">
     <div class="row" style="margin-bottom:10px"><span class="lab">Recently done</span>
@@ -1207,6 +1219,18 @@ function viewSetup(){
         <label for="btotal">Readings in plan</label>
         <input id="btotal" class="mono" type="number" min="1" value="${S.cfg.bible.total}"></div></div>
 
+    <div class="card"><div class="ch"><h3>Diagnostics</h3><span class="sp"></span>
+      <span class="tag ${Store.mode==="db"?"live":""}">${Store.mode==="db"?"synced":"this browser"}</span></div>
+      <div class="kv" style="font-size:13px">
+        <span>Tasks held</span><span class="mono">${S.tasks.items.length}</span>
+        <span>On today</span><span class="mono">${todayList().length}</span>
+        <span>Config version</span><span class="mono">v${S.cfg.v || 1}</span>
+      </div>
+      ${lastError ? `<p class="mono" style="font-size:11px;color:var(--late);margin-top:10px;
+        word-break:break-word">${esc(lastError.slice(0,400))}</p>`
+        : `<p class="dim" style="font-size:12.5px;margin-top:10px">No errors this session.</p>`}
+    </div>
+
     <div class="card"><div class="ch"><h3>Your data</h3></div>
       <p class="muted" style="font-size:13.5px">${Store.mode==="db"
         ? "Stored privately against your account." : "In this browser only — nothing was sent anywhere."}</p>
@@ -1238,146 +1262,209 @@ const VIEWS = { today:viewToday, backlog:viewBacklog, report:viewReport, setup:v
 function render(){
   $("#tabs").innerHTML = TABS.map(([id,l]) =>
     `<button class="tab" role="tab" data-tab="${id}" aria-selected="${S.tab===id}">${l}</button>`).join("");
-  $$("#tabs .tab").forEach(b => b.onclick = () => { S.tab = b.dataset.tab; S.narrative = ""; render(); });
-  const g = $("#gear");
-  g.setAttribute("aria-selected", S.tab === "setup");
-  g.onclick = () => { S.tab = S.tab === "setup" ? "today" : "setup"; render(); };
+  $("#gear").setAttribute("aria-selected", S.tab === "setup");
 
   const d = new Date();
   $("#stamp").textContent = d.toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"})
     + (Store.mode === "db" ? "" : " · local");
 
   const v = $("#view");
-  v.innerHTML = (VIEWS[S.tab] || viewToday)();
-  wire(v); bindTips(v);
+  try { v.innerHTML = (VIEWS[S.tab] || viewToday)(); }
+  catch (e) {
+    lastError = (e && e.stack) || String(e); console.error(e);
+    v.innerHTML = `<div class="empty" style="margin-top:20px">
+      <b>This view could not be drawn.</b><br>Your data is safe — switch tabs, or reload.
+      <br><span class="mono" style="font-size:11px">${esc(String(e && e.message || e))}</span></div>`;
+  }
+  bindTips(v);
 }
 
-function wire(root){
-  const date = ymd(new Date());
+/* ── events ──────────────────────────────────────────────────────────────
+   One delegated listener on #view, attached once at boot. Nothing is
+   re-bound on render, so a failure in any single handler cannot leave the
+   page looking alive but dead to clicks. Every handler is wrapped: an
+   error surfaces as a message instead of killing the rest of the app. */
 
-  $$("[data-habit]", root).forEach(b => b.onclick = () => { toggleHabit(b.dataset.habit, date); render(); });
-  $$("[data-energy]", root).forEach(b => b.onclick = () => {
-    const rec = dayRec(date), n = +b.dataset.energy;
-    rec.energy = rec.energy === n ? 0 : n; saveWeek(); render();
-  });
-  const one = $("#one", root);
-  if (one) one.onchange = () => { dayRec(date).one = one.value.trim(); saveWeek(); toast("Saved"); };
-  const note = $("#note", root);
-  if (note) note.onchange = () => { dayRec(date).note = note.value.trim(); saveWeek(); toast("Saved"); };
+const CLICK_KEYS = ["task","star","open","edit","cancel","save","del","move","ep","er","eday",
+  "prio","nrep","nday","habit","energy","bible","quick","px","pd","pp","delentry","blk"];
+const CHANGE_KEYS = ["pt","pk","pz","pn","target"];
 
-  $$("[data-bible]", root).forEach(b => b.onclick = () => {
-    const n = +b.dataset.bible;
-    S.cfg.bible.day = Math.max(0, Math.min(S.cfg.bible.total, S.cfg.bible.day + n));
-    if (n > 0) { checkOn("bible", date); checkOn("quiet", date); }
-    saveCfg(); render();
-  });
-  const bday = $("#bday", root);
-  if (bday) bday.onchange = () => {
-    S.cfg.bible.day = Math.max(0, Math.min(S.cfg.bible.total, +bday.value||0)); saveCfg(); render();
-  };
+function findHit(node, keys){
+  for (let el = node; el && el !== document.body; el = el.parentElement) {
+    if (el.id && ACTIONS[el.id]) return { id: el.id, el };
+    if (el.dataset) for (const k of keys) if (k in el.dataset) return { key:k, val:el.dataset[k], el };
+  }
+  return null;
+}
+const cut = v => { const i = v.indexOf(":"); return i < 0 ? [v,""] : [v.slice(0,i), v.slice(i+1)]; };
+const findTask = id => S.tasks.items.find(x => x.id === id);
+const today = () => ymd(new Date());
 
-  const ts = $("#tstart", root);
-  if (ts) ts.onclick = () => {
-    const k = $("#tsel", root).value;
-    S.timer = { track:k, label:track(k).name, startedAt:Date.now() }; saveTimer(); render();
-  };
-  const tp = $("#tstop", root);
-  if (tp) tp.onclick = () => {
+let lastError = "";
+function guard(fn){
+  try { fn(); }
+  catch (e) {
+    lastError = (e && e.message) || String(e);
+    console.error(e);
+    toast("Something went wrong there — the rest still works.");
+  }
+}
+
+/* ── id-triggered actions ─────────────────────────────────────────────── */
+const ACTIONS = {
+  nadd(el){
+    const box = el.closest(".card") || document;
+    const title = ($("#nt", box).value || "").trim();
+    if (!title) return $("#nt", box).focus();
+    const N = S.newTask;
+    const due = N.rep ? matchDate(N.rep, N.rdays, new Date())
+              : el.dataset.where === "today" ? today() : "";
+    S.tasks.items.push({ id:Math.random().toString(36).slice(2,9), t:title, k:$("#nk",box).value,
+      due, est:+$("#ne",box).value || 0, p:S.prio, rep:N.rep, rdays:N.rdays.slice(), d:"", done:false });
+    saveTasks(); render();
+    if (due && due !== today())
+      toast("First one on " + parseYmd(due).toLocaleDateString(undefined,
+        { weekday:"long", month:"short", day:"numeric" }));
+    const again = $("#nt"); if (again) again.focus();
+  },
+  tstart(){ const k = $("#tsel").value;
+    S.timer = { track:k, label:track(k).name, startedAt:Date.now() }; saveTimer(); render(); },
+  tstop(){
     const m = Math.max(1, Math.round((Date.now()-S.timer.startedAt)/60000));
-    addEntry(S.timer.track, m, S.timer.label, date);
+    addEntry(S.timer.track, m, S.timer.label, today());
     toast("Logged " + hm(m) + " to " + track(S.timer.track).name);
     S.timer = null; saveTimer(); render();
-  };
-  const tc = $("#tcancel", root);
-  if (tc) tc.onclick = () => { S.timer = null; saveTimer(); render(); };
-  $$("[data-quick]", root).forEach(b => b.onclick = () => {
-    const k = $("#tsel", root).value, m = +b.dataset.quick;
-    addEntry(k, m, track(k).name, date); toast("Logged " + hm(m)); render();
-  });
+  },
+  tcancel(){ S.timer = null; saveTimer(); render(); },
+  eadd(){
+    const m = +$("#em").value;
+    if (!(m > 0)) return $("#em").focus();
+    addEntry($("#ek").value, m, ($("#et").value || "").trim() || null, $("#ed").value);
+    toast("Logged " + hm(m)); render();
+  },
+  dbreak(){ const d = $("#dump"); if (d) S.dump.text = d.value; breakDown(); },
+  dclear(){ S.dump = { text:"", proposals:[], busy:false }; saveDump(); render(); },
+  paddall(){
+    const add = S.dump.proposals.filter(x => (x.t||"").trim());
+    if (!add.length) return toast("Nothing to add.");
+    add.forEach(x => S.tasks.items.push({ id:Math.random().toString(36).slice(2,9),
+      t:x.t.trim(), k:x.k, d:x.d || "", due:x.day || "", est:x.est || 0, p:x.p,
+      rep:"", rdays:[], done:false }));
+    S.dump = { text:"", proposals:[], busy:false }; saveDump(); saveTasks(); render();
+    toast(add.length + " task" + (add.length===1?"":"s") + " added");
+  },
+  pallt(){ S.dump.proposals.forEach(pr => pr.day = today()); saveDump(); render();
+    toast("All set for today"); },
+  pallb(){ S.dump.proposals.forEach(pr => pr.day = ""); saveDump(); render();
+    toast("All going to the backlog"); },
+  expandall(){
+    const list = todayList().filter(t => t.d), any = list.some(t => S.open[t.id]);
+    list.forEach(t => { if (any) delete S.open[t.id]; else S.open[t.id] = 1; });
+    render();
+  },
+  gotodump(){ S.tab = "backlog"; render();
+    setTimeout(() => { const d = $("#dump"); if (d) d.focus(); }, 40); },
+  prevw(){ S.offset++; S.narrative = "";
+    loadWeek(weekKey(addDays(new Date(), -7*S.offset))).then(render); },
+  nextw(){ if (!S.offset) return; S.offset--; S.narrative = "";
+    loadWeek(weekKey(addDays(new Date(), -7*S.offset))).then(render); },
+  tbl(){ S.showTable = !S.showTable; render(); },
+  reflect(el){ askReflection(el); },
+  exp(){ doExport(); },
+  imp(){ const f = $("#impf"); if (f) f.click(); },
+  vsave(){
+    try {
+      const v = JSON.parse($("#vrs").value);
+      if (!Array.isArray(v) || !v.length) throw new Error("needs to be a non-empty list");
+      v.forEach((x,i) => { if (!Array.isArray(x) || x.length < 2 || !String(x[1]).trim())
+        throw new Error("item " + (i+1) + " must be [“reference”, “text”]"); });
+      S.cfg.verses = v.map(x => [String(x[0]), String(x[1])]);
+      saveCfg(); toast("Verses saved"); render();
+    } catch (e) { $("#vmsg").innerHTML = '<span style="color:var(--late)">'+esc(e.message)+"</span>"; }
+  },
+  vreset(){ delete S.cfg.verses; saveCfg(); render(); toast("Back to the KJV set"); },
+};
 
-  $$("[data-task]", root).forEach(b => b.onclick = () => {
-    const t = S.tasks.items.find(x => x.id === b.dataset.task);
+/* ── data-attribute actions ───────────────────────────────────────────── */
+const HANDLERS = {
+  task(id){
+    const t = findTask(id), date = today();
     if (!t) return;
     if (t.done) {
       uncompleteTask(t);
-      if (isChecked("__cleared", date)) toggleHabit("__cleared", date);  // no longer a cleared day
+      if (isChecked("__cleared", date)) toggleHabit("__cleared", date);
       saveTasks(); render(); return;
     }
     const nextDue = completeTask(t, date);
     saveTasks();
-
     const list = todayList(), total = list.length, left = list.filter(x => !x.done).length;
-    const doneN = total - left, wasOn = isChecked("__cleared", date);
-    if (total && !left && !wasOn) checkOn("__cleared", date);
+    const doneN = total - left;
+    if (total && !left && !isChecked("__cleared", date)) checkOn("__cleared", date);
     render();
-
     if (total && !left) {
       celebrate();
       const st = clearedStreak();
-      toast(st > 1 ? "Day cleared — " + st + " in a row." : "Day cleared. Every single one.");
-      return;
+      return toast(st > 1 ? "Day cleared — " + st + " in a row." : "Day cleared. Every single one.");
     }
     const pct = total ? doneN/total : 0, prev = total ? (doneN-1)/total : 0;
     const mile = [.25,.5,.75].find(m => prev < m && pct >= m);
     if (mile) return toast(Math.round(mile*100) + "% down — " + left + " to go");
     toast(CHEERS[Math.floor(Math.random()*CHEERS.length)]
       + (t.est ? " Logged " + hm(t.est) + "." : "")
-      + (nextDue ? " Back on " + parseYmd(nextDue)
-          .toLocaleDateString(undefined,{ weekday:"long" }) + "." : ""));
-  });
-  $$("[data-del]", root).forEach(b => b.onclick = () => {
-    S.tasks.items = S.tasks.items.filter(x => x.id !== b.dataset.del); saveTasks(); render();
-  });
-  $$("[data-prio]", root).forEach(b => b.onclick = () => { S.prio = +b.dataset.prio; render(); });
-
-  /* ── editing one task ───────────────────────────────────────────────── */
-  const cut = v => { const i = v.indexOf(":"); return [v.slice(0,i), v.slice(i+1)]; };
-  const findTask = id => S.tasks.items.find(x => x.id === id);
-
-  $$("[data-edit]", root).forEach(b => b.onclick = () => {
-    S.editing = S.editing === b.dataset.edit ? null : b.dataset.edit;
-    if (S.editing && S.tab !== "backlog") S.tab = "backlog";
-    render();
-  });
-  $$("[data-cancel]", root).forEach(b => b.onclick = () => { S.editing = null; render(); });
-  $$("[data-star]", root).forEach(b => b.onclick = () => {
-    const t = findTask(b.dataset.star);
+      + (nextDue ? " Back on " + parseYmd(nextDue).toLocaleDateString(undefined,{weekday:"long"}) + "." : ""));
+  },
+  star(id){
+    const t = findTask(id);
     if (!t || t.done) return;
     if (t.s) { t.s = 0; saveTasks(); render(); return; }
     const day = t.due || "";
-    if (starsOn(day) >= STAR_LIMIT) {
+    if (starsOn(day) >= STAR_LIMIT)
       return toast(day ? "Three is the limit for one day — unstar one first"
                        : "Three starred in the backlog already");
-    }
     t.s = 1; saveTasks(); render();
     toast("Starred — " + starsOn(day) + " of " + STAR_LIMIT + " for the day");
-  });
-  $$("[data-open]", root).forEach(b => b.onclick = () => {
-    const id = b.dataset.open;
-    if (S.open[id]) delete S.open[id]; else S.open[id] = 1;
-    render();
-  });
-  $$("[data-pn]", root).forEach(i => i.onchange = () =>
-    { S.dump.proposals[+i.dataset.pn].d = i.value; saveDump(); });
-  const xa = $("#expandall", root);
-  if (xa) xa.onclick = () => {
-    const list = todayList().filter(t => t.d);
-    const any = list.some(t => S.open[t.id]);
-    list.forEach(t => { if (any) delete S.open[t.id]; else S.open[t.id] = 1; });
-    render();
-  };
-  $$("[data-er]", root).forEach(b => b.onclick = () => {
-    const [id,r] = cut(b.dataset.er), t = findTask(id);
+  },
+  open(id){ if (S.open[id]) delete S.open[id]; else S.open[id] = 1; render(); },
+  edit(id){ S.editing = S.editing === id ? null : id;
+    if (S.editing && S.tab !== "backlog" && !onToday(findTask(id) || {})) S.tab = "backlog";
+    render(); },
+  cancel(){ S.editing = null; render(); },
+  save(id){
+    const t = findTask(id);
+    if (!t) return;
+    const title = ($("#ei-"+id).value || "").trim();
+    if (!title) return $("#ei-"+id).focus();
+    t.t = title;
+    t.k = $("#ec-"+id).value;
+    t.est = +$("#ez-"+id).value || 0;
+    t.d = ($("#ed-"+id).value || "").trim();
+    S.editing = null; saveTasks(); render(); toast("Saved");
+  },
+  del(id){ S.tasks.items = S.tasks.items.filter(x => x.id !== id);
+    if (S.editing === id) S.editing = null; saveTasks(); render(); },
+  move(id){
+    const t = findTask(id);
+    if (!t) return;
+    const toBacklog = onToday(t);
+    t.due = toBacklog ? "" : today();
+    let dropped = false;
+    if (t.s && starsOn(t.due) > STAR_LIMIT) { t.s = 0; dropped = true; }
+    saveTasks(); render();
+    toast(toBacklog ? "Back in the backlog"
+      : dropped ? "On today's list — unstarred, today already has three" : "On today's list");
+  },
+  ep(v){ const [id,n] = cut(v), t = findTask(id); if (t) { t.p = +n; saveTasks(); render(); } },
+  er(v){
+    const [id,r] = cut(v), t = findTask(id);
     if (!t) return;
     t.rep = r === "once" ? "" : "daily";
     if (r === "once") t.rdays = [];
-    if (t.rep && !t.due) t.due = ymd(new Date());
+    if (t.rep && !t.due) t.due = today();
     saveTasks(); render();
     toast(t.rep ? "Repeats " + repeatLabel(t) : "No longer repeats");
-  });
-  /* tapping weekdays is what turns a task into a repeating one */
-  $$("[data-eday]", root).forEach(b => b.onclick = () => {
-    const [id,d] = cut(b.dataset.eday), t = findTask(id);
+  },
+  eday(v){
+    const [id,d] = cut(v), t = findTask(id);
     if (!t) return;
     const set = new Set(t.rdays || []);
     set.has(+d) ? set.delete(+d) : set.add(+d);
@@ -1385,142 +1472,78 @@ function wire(root){
     t.rep = t.rdays.length ? "days" : "";
     if (t.rep && !t.due) t.due = matchDate(t.rep, t.rdays, new Date());
     saveTasks(); render();
-  });
-  $$("[data-nrep]", root).forEach(b => b.onclick = () => {
-    S.newTask = b.dataset.nrep === "daily" ? { rep:"daily", rdays:[] } : { rep:"", rdays:[] };
-    render();
-  });
-  $$("[data-nday]", root).forEach(b => b.onclick = () => {
-    const d = +cut(b.dataset.nday)[1], set = new Set(S.newTask.rdays || []);
+  },
+  prio(v){ S.prio = +v; render(); },
+  nrep(v){ S.newTask = v === "daily" ? { rep:"daily", rdays:[] } : { rep:"", rdays:[] }; render(); },
+  nday(v){
+    const d = +cut(v)[1], set = new Set(S.newTask.rdays || []);
     set.has(d) ? set.delete(d) : set.add(d);
     const rdays = Array.from(set).sort();
     S.newTask = { rep: rdays.length ? "days" : "", rdays };
     render();
-  });
-  /* send the whole dump one way or the other */
-  const bulk = (btn, day) => { const e = $(btn, root); if (!e) return;
-    e.onclick = () => { S.dump.proposals.forEach(pr => pr.day = day); saveDump(); render();
-      toast(day ? "All set for today" : "All going to the backlog"); }; };
-  bulk("#pallt", ymd(new Date()));
-  bulk("#pallb", "");
-  const gd = $("#gotodump", root);
-  if (gd) gd.onclick = () => { S.tab = "backlog"; render();
-    setTimeout(() => { const d = $("#dump"); if (d) d.focus(); }, 40); };
-  $$("[data-ep]", root).forEach(b => b.onclick = () => {
-    const [id,n] = cut(b.dataset.ep), t = findTask(id);
-    if (t) { t.p = +n; saveTasks(); render(); }
-  });
-  /* one button moves a task between today and the backlog */
-  $$("[data-move]", root).forEach(b => b.onclick = () => {
-    const t = findTask(b.dataset.move);
-    if (!t) return;
-    const toBacklog = onToday(t);
-    t.due = toBacklog ? "" : ymd(new Date());
-    let dropped = false;
-    if (t.s && starsOn(t.due) > STAR_LIMIT) { t.s = 0; dropped = true; }
-    saveTasks(); render();
-    toast(toBacklog ? "Back in the backlog"
-      : dropped ? "On today's list — unstarred, today already has three"
-      : "On today's list");
-  });
-  $$("[data-save]", root).forEach(b => b.onclick = () => {
-    const id = b.dataset.save, t = findTask(id);
-    if (!t) return;
-    const title = ($("#ei-"+id, root).value || "").trim();
-    if (!title) return $("#ei-"+id, root).focus();
-    t.t = title;
-    t.k = $("#ec-"+id, root).value;
-    t.est = +$("#ez-"+id, root).value || 0;
-    t.d = ($("#ed-"+id, root).value || "").trim();
-    S.editing = null; saveTasks(); render(); toast("Saved");
+  },
+  habit(id){ toggleHabit(id, today()); render(); },
+  energy(v){ const rec = dayRec(today()), n = +v;
+    rec.energy = rec.energy === n ? 0 : n; saveWeek(); render(); },
+  bible(v){
+    const n = +v;
+    S.cfg.bible.day = Math.max(0, Math.min(S.cfg.bible.total, S.cfg.bible.day + n));
+    if (n > 0) { checkOn("bible", today()); checkOn("quiet", today()); }
+    saveCfg(); render();
+  },
+  quick(v){ const k = $("#tsel").value, m = +v;
+    addEntry(k, m, track(k).name, today()); toast("Logged " + hm(m)); render(); },
+  px(i){ S.dump.proposals.splice(+i, 1); saveDump(); render(); },
+  pd(v){ const [i,day] = cut(v); S.dump.proposals[+i].day = day; saveDump(); render(); },
+  pp(v){ const [i,n] = cut(v); S.dump.proposals[+i].p = +n; saveDump(); render(); },
+  delentry(id){ S.week.entries = S.week.entries.filter(e => e.id !== id); saveWeek(); render(); },
+  blk(){ /* fixed blocks were removed; kept so an old cached page cannot throw */ },
+};
+
+function bindEvents(){
+  document.querySelector("header").addEventListener("click", ev => guard(() => {
+    const tab = ev.target.closest("[data-tab]");
+    if (tab) { S.tab = tab.dataset.tab; S.narrative = ""; return render(); }
+    if (ev.target.closest("#gear")) { S.tab = S.tab === "setup" ? "today" : "setup"; render(); }
+  }));
+
+  const view = $("#view");
+  view.addEventListener("click", ev => {
+    const hit = findHit(ev.target, CLICK_KEYS);
+    if (!hit) return;
+    guard(() => { if (hit.id) ACTIONS[hit.id](hit.el); else HANDLERS[hit.key](hit.val, hit.el); });
   });
 
-  /* ── brain dump ─────────────────────────────────────────────────────── */
-  const dp = $("#dump", root);
-  if (dp) dp.oninput = () => { S.dump.text = dp.value; saveDump(); };  // no re-render: keep the caret
-  const db = $("#dbreak", root);
-  if (db) db.onclick = () => { S.dump.text = ($("#dump", root) || {}).value || S.dump.text; breakDown(); };
-  const dc = $("#dclear", root);
-  if (dc) dc.onclick = () => { S.dump = { text:"", proposals:[], busy:false }; saveDump(); render(); };
-
-  $$("[data-pt]", root).forEach(i => i.onchange = () => { S.dump.proposals[+i.dataset.pt].t = i.value.trim(); saveDump(); });
-  $$("[data-pk]", root).forEach(i => i.onchange = () => { S.dump.proposals[+i.dataset.pk].k = i.value; saveDump(); render(); });
-  $$("[data-pz]", root).forEach(i => i.onchange = () => { S.dump.proposals[+i.dataset.pz].est = +i.value || 0; saveDump(); });
-  $$("[data-pp]", root).forEach(b => b.onclick = () => {
-    const [i,n] = cut(b.dataset.pp); S.dump.proposals[+i].p = +n; saveDump(); render();
-  });
-  $$("[data-pd]", root).forEach(b => b.onclick = () => {
-    const [i,day] = cut(b.dataset.pd), pr = S.dump.proposals[+i];
-    pr.day = day; saveDump(); render();
-  });
-  $$("[data-px]", root).forEach(b => b.onclick = () => {
-    S.dump.proposals.splice(+b.dataset.px, 1); saveDump(); render();
-  });
-  const pa = $("#paddall", root);
-  if (pa) pa.onclick = () => {
-    const add = S.dump.proposals.filter(x => x.t.trim());
-    if (!add.length) return toast("Nothing to add.");
-    add.forEach(x => S.tasks.items.push({ id:Math.random().toString(36).slice(2,9),
-      t:x.t.trim(), k:x.k, d:x.d || "", due:x.day || "", est:x.est || 0, p:x.p, rep:"", done:false }));
-    S.dump = { text:"", proposals:[], busy:false }; saveDump();
-    saveTasks(); render();
-    toast(add.length + " task" + (add.length===1?"":"s") + " added");
-  };
-  const nadd = $("#nadd", root);
-  if (nadd) {
-    const add = () => {
-      const t = $("#nt", root).value.trim();
-      if (!t) return $("#nt", root).focus();
-      const N = S.newTask;
-      const due = N.rep ? matchDate(N.rep, N.rdays, new Date())
-                : nadd.dataset.where === "today" ? ymd(new Date()) : "";
-      S.tasks.items.push({ id:Math.random().toString(36).slice(2,9), t, k:$("#nk",root).value,
-        due, est:+$("#ne",root).value||0, p:S.prio, rep:N.rep, rdays:N.rdays.slice(), d:"", done:false });
-      saveTasks(); render();
-      if (due && due !== ymd(new Date()))
-        toast("First one on " + parseYmd(due).toLocaleDateString(undefined,
-          { weekday:"long", month:"short", day:"numeric" }));
-      setTimeout(() => { const i = $("#nt"); if (i) i.focus(); }, 30);
-    };
-    nadd.onclick = add;
-    $("#nt", root).onkeydown = e => { if (e.key === "Enter") add(); };
-  }
-
-  const ea = $("#eadd", root);
-  if (ea) ea.onclick = () => {
-    const m = +$("#em", root).value;
-    if (!(m > 0)) return $("#em", root).focus();
-    addEntry($("#ek",root).value, m, $("#et",root).value.trim()||null, $("#ed",root).value);
-    toast("Logged " + hm(m)); render();
-  };
-  $$("[data-delentry]", root).forEach(b => b.onclick = () => {
-    S.week.entries = S.week.entries.filter(e => e.id !== b.dataset.delentry); saveWeek(); render();
+  view.addEventListener("change", ev => {
+    const el = ev.target, id = el.id || "";
+    guard(() => {
+      const hit = findHit(el, CHANGE_KEYS);
+      if (hit && hit.key === "pt") { S.dump.proposals[+hit.val].t = el.value.trim(); return saveDump(); }
+      if (hit && hit.key === "pk") { S.dump.proposals[+hit.val].k = el.value; saveDump(); return render(); }
+      if (hit && hit.key === "pz") { S.dump.proposals[+hit.val].est = +el.value || 0; return saveDump(); }
+      if (hit && hit.key === "pn") { S.dump.proposals[+hit.val].d = el.value; return saveDump(); }
+      if (hit && hit.key === "target") { track(hit.val).target = Math.max(0, +el.value || 0);
+        saveCfg(); return toast("Target updated"); }
+      if (id === "one")    { dayRec(today()).one = el.value.trim(); saveWeek(); return toast("Saved"); }
+      if (id === "note")   { dayRec(today()).note = el.value.trim(); saveWeek(); return toast("Saved"); }
+      if (id === "bday")   { S.cfg.bible.day = Math.max(0, Math.min(S.cfg.bible.total, +el.value || 0));
+        saveCfg(); return render(); }
+      if (id === "bstart") { S.cfg.bible.start = el.value; return saveCfg(); }
+      if (id === "btotal") { S.cfg.bible.total = Math.max(1, +el.value || 365); return saveCfg(); }
+      if (id === "impf")   { return doImport(el.files[0]); }
+    });
   });
 
-  const pw = $("#prevw", root);
-  if (pw) pw.onclick = async () => { S.offset++; S.narrative = "";
-    await loadWeek(weekKey(addDays(new Date(), -7*S.offset))); render(); };
-  const nw = $("#nextw", root);
-  if (nw) nw.onclick = async () => { if (!S.offset) return; S.offset--; S.narrative = "";
-    await loadWeek(weekKey(addDays(new Date(), -7*S.offset))); render(); };
-  const tb = $("#tbl", root);
-  if (tb) tb.onclick = () => { S.showTable = !S.showTable; render(); };
-  const rf = $("#reflect", root);
-  if (rf) rf.onclick = () => askReflection(rf);
-
-  $$("[data-target]", root).forEach(i => i.onchange = () => {
-    track(i.dataset.target).target = Math.max(0, +i.value||0); saveCfg(); toast("Target updated");
+  view.addEventListener("input", ev => {
+    if (ev.target.id === "dump") { S.dump.text = ev.target.value; saveDump(); }   // no re-render
   });
-  const bs = $("#bstart", root);
-  if (bs) bs.onchange = () => { S.cfg.bible.start = bs.value; saveCfg(); };
-  const bt = $("#btotal", root);
-  if (bt) bt.onchange = () => { S.cfg.bible.total = Math.max(1, +bt.value||365); saveCfg(); };
-  const ex = $("#exp", root);
-  if (ex) ex.onclick = doExport;
-  const im = $("#imp", root);
-  if (im) im.onclick = () => $("#impf", root).click();
-  const imf = $("#impf", root);
-  if (imf) imf.onchange = () => doImport(imf.files[0]);
+
+  view.addEventListener("keydown", ev => {
+    if (ev.key === "Enter" && ev.target.id === "nt") {
+      const btn = $("#nadd", ev.target.closest(".card") || document);
+      if (btn) guard(() => ACTIONS.nadd(btn));
+    }
+  });
 }
 
 /* a short burst of paper — the only animation in the app, and it has to earn it */
@@ -1645,7 +1668,24 @@ function migrate(){
 /* ── boot ──────────────────────────────────────────────────────────────── */
 async function boot(carried){
   if (carried && carried.tab) { S.tab = carried.tab; S.offset = carried.offset||0; }
+  bindEvents();          // before anything can fail, so the page is never dead to clicks
   render();
+  try { await load(); } catch (e) {
+    lastError = (e && e.stack) || String(e); console.error(e);
+    toast("Some of your data could not be loaded — see Setup.");
+  }
+  render();
+  setInterval(() => {
+    const c = $("#clk");
+    if (c && S.timer && S.timer.startedAt) {
+      const el = Math.floor((Date.now()-S.timer.startedAt)/1000);
+      c.textContent = pad(Math.floor(el/3600))+":"+pad(Math.floor(el/60)%60)+":"+pad(el%60);
+    }
+  }, 1000);
+  setInterval(() => { if (S.tab === "today") render(); }, 120000);
+}
+
+async function load(){
   await Store.connect();
 
   S.cfg = await Store.get("app/config");
@@ -1666,16 +1706,6 @@ async function boot(carried){
   const tm = await Store.get("app/timer");
   S.timer = tm && tm.startedAt ? tm : null;
   await loadWeek(weekKey(new Date()));
-  render();
-
-  setInterval(() => {
-    const c = $("#clk");
-    if (c && S.timer && S.timer.startedAt) {
-      const el = Math.floor((Date.now()-S.timer.startedAt)/1000);
-      c.textContent = pad(Math.floor(el/3600))+":"+pad(Math.floor(el/60)%60)+":"+pad(el%60);
-    }
-  }, 1000);
-  setInterval(() => { if (S.tab === "today") render(); }, 120000);
 }
 
 if (window.claude && window.claude.hot) window.claude.hot.snapshot(() => ({ tab:S.tab, offset:S.offset }));

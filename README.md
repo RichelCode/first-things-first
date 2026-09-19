@@ -103,6 +103,21 @@ open index.html
 as a hosted page. `build-local.mjs` wraps it in a document skeleton for filesystem use.
 `index.html` is generated and not committed.
 
+## Events
+
+Every interaction runs through **one delegated `click` listener on `#view`**, attached
+once at boot and never re-bound. `render()` replaces the view's HTML and binds nothing,
+so no amount of re-rendering can leave the page looking alive but dead to clicks — the
+failure mode that per-element `onclick` wiring produces when any single handler throws
+mid-loop.
+
+A handler is found by walking up from the event target to the nearest element carrying
+a known `data-*` key (or an id in the action table), so markup needs no extra
+attributes. Every handler runs inside a `guard()` that catches, records, and surfaces
+the error rather than letting it kill the rest of the session. `render()` catches too:
+a view that cannot draw shows a message instead of a blank page, and Setup →
+Diagnostics reports the store mode, task counts, config version and the last error.
+
 ## Data
 
 All state is local. Nothing is sent anywhere, and there is no account, no analytics,
