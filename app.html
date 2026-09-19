@@ -194,7 +194,7 @@ main{max-width:1140px;margin:0 auto;padding-inline:22px;padding-block:26px 80px}
 .item .sp{flex:1;min-width:0}
 .x{width:26px;height:26px;border-radius:50%;color:var(--ink-3);font-size:16px;line-height:1;flex:0 0 auto}
 .x:hover{background:var(--late-wash);color:var(--late)}
-.addbar{display:grid;grid-template-columns:minmax(0,1fr) 166px 140px 74px auto;gap:9px}
+.addbar{display:grid;grid-template-columns:minmax(0,1fr) 166px 74px auto;gap:9px}
 @media (max-width:780px){.addbar{grid-template-columns:1fr 1fr}.addbar>*:first-child{grid-column:1/-1}}
 
 /* ── report ─────────────────────────────────────────────────────────────── */
@@ -266,6 +266,7 @@ textarea.json{width:100%;font-family:var(--mono);font-size:12px;line-height:1.55
 .pencil{width:28px;height:28px;border-radius:50%;color:var(--ink-3);font-size:13px;flex:0 0 auto;
   display:grid;place-items:center}
 .pencil:hover{background:var(--surface-2);color:var(--pink-deep)}
+.pencil.move{font-size:15px;font-weight:700}
 
 /* ── brain dump ─────────────────────────────────────────────────────────── */
 .dump textarea{width:100%;font-size:15px;line-height:1.6;min-height:120px;border-radius:var(--r-2);
@@ -612,22 +613,14 @@ function verseFor(d){
   const v = l[dayOfYear(d) % l.length];
   return Array.isArray(v) ? v : [v && v.ref || "", v && v.text || String(v)];
 }
-const assignedTo = d => S.tasks.items.filter(t => !t.done && t.due === d);
 const trackOpts = sel => S.cfg.tracks.map(k =>
   `<option value="${k.id}" ${sel===k.id?"selected":""}>${esc(k.name)}</option>`).join("");
-/* 7 days from today, plus "no day" — the whole scheduling gesture is one tap */
-function dayChips(sel, attr, id){
-  const out = [];
-  for (let i = 0; i < 7; i++) {
-    const d = addDays(new Date(), i), k = ymd(d);
-    const rest = d.getDay() === 0;
-    out.push(`<button class="chipday ${sel===k?"on":""} ${rest?"rest":""}" data-${attr}="${id}:${k}"
-      ${rest?'title="Sunday is a rest day"':""}>${
-      i===0?"Today":i===1?"Tomorrow":DAYSHORT[d.getDay()]}</button>`);
-  }
-  out.push(`<button class="chipday ${sel?"":"on"}" data-${attr}="${id}:">No day</button>`);
-  return out.join("");
-}
+/* a task is either on today's list or waiting in the backlog — nothing else */
+const onToday = t => !!t.due && t.due <= ymd(new Date());
+const todayList = () => S.tasks.items
+  .filter(t => (!t.done && onToday(t)) || (t.done && t.doneAt === ymd(new Date())))
+  .sort((a,b) => (a.done?1:0)-(b.done?1:0) || a.p-b.p);
+const backlogList = () => S.tasks.items.filter(t => !t.done && !t.due);
 
 const esc = s => String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
   .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -670,13 +663,12 @@ function viewToday(){
   const blocks = S.cfg.rhythm[dow] || [], rec = dayRec(date);
   const nowMin = now.getHours()*60 + now.getMinutes();
 
-  const mine = S.tasks.items.filter(t => t.due === date)
-    .sort((a,b) => (a.done?1:0)-(b.done?1:0) || a.p-b.p);
+  const mine = todayList();
   const openT = mine.filter(t => !t.done);
   const load = openT.reduce((s,t) => s+(t.est||0), 0);
   const doneMin = mine.filter(t => t.done).reduce((s,t) => s+(t.est||0), 0);
   const total = load + doneMin;
-  const late = S.tasks.items.filter(t => bucket(t) === "late");
+  const waiting = backlogList().length;
 
   const habits = S.cfg.habits.filter(h => h.days.includes(dow)).map(h => {
     const on = isChecked(h.id, date), st = streak(h);
@@ -736,11 +728,13 @@ function viewToday(){
 
       <div class="card">
         <div class="ch"><h3>Today's tasks</h3><span class="sp"></span>
-          ${late.length?`<button class="btn sm" id="pullate">Pull ${late.length} late in</button>`:""}
+          ${waiting?`<span class="dim" style="font-size:12px">${waiting} waiting in the backlog</span>`:""}
           <button class="btn quiet sm" id="gotodump">Brain dump →</button></div>
-        ${mine.length ? `<div class="list">${mine.map(taskRow).join("")}</div>`
-          : `<div class="empty">Nothing assigned to today. Write a brain dump, break it into tasks,
-             and tap <b>All → Today</b>.</div>`}
+        ${addRow("today")}
+        <div style="margin-top:16px">
+        ${mine.length ? `<div class="list">${mine.map(t => taskRow(t,true)).join("")}</div>`
+          : `<div class="empty">Write today's list above — or brain dump everything and send it here.</div>`}
+        </div>
       </div>
 
       ${spine}
@@ -827,101 +821,22 @@ function timerCard(){
   </div>`;
 }
 
-/* ═══ WEEK ═══════════════════════════════════════════════════════════════ */
-function viewWeek(){
-  const mon = mondayOf(new Date()), today = ymd(new Date());
-  const days = MONSUN.map((dow,i) => {
-    const date = ymd(addDays(mon,i));
-    const list = (S.cfg.rhythm[dow] || []).filter(b => b.track !== "rest" || dur(b) >= 60);
-    const hrs = (S.cfg.rhythm[dow] || []).reduce((s,b) => s+dur(b), 0);
-    return `<div class="day ${date===today?"now":""} ${dow===0?"sun":""}">
-      <div class="dh"><span class="dn">${DAYSHORT[dow]}</span><span class="dd">${parseYmd(date).getDate()}</span></div>
-      ${list.map(b => `<div class="wb" style="--c:var(${tv(b.track)})"><div class="bar"></div>
-        <div><span class="tm">${clock(b.start)}</span>${esc(b.label)}</div></div>`).join("")}
-      ${(() => { const ts = assignedTo(date); if (!ts.length) return "";
-        const mins = ts.reduce((s,t) => s+(t.est||0), 0);
-        return `<div class="sect">tasks · ${hm(mins)}</div>` + ts.map(t =>
-          `<div class="wt ${t.due < today ? "late" : ""}" style="--c:var(${tv(t.k)})">
-            <button class="tb" data-task="${t.id}" aria-label="Done: ${esc(t.t)}"></button>
-            <span>${esc(t.t)}</span></div>`).join(""); })()}
-      <div class="dim mono" style="font-size:10px;margin-top:auto;padding-top:7px">${hm(hrs)}</div>
-    </div>`;
-  }).join("");
-
-  const logged = {}, plan = {};
-  S.week.entries.forEach(e => logged[e.track] = (logged[e.track]||0)+e.min);
-  MONSUN.forEach(dow => (S.cfg.rhythm[dow]||[]).forEach(b => plan[b.track] = (plan[b.track]||0)+dur(b)));
-
-  const domBars = DOMAINS.map(d => {
-    const ts = S.cfg.tracks.filter(t => t.dom === d.id);
-    const lg = ts.reduce((s,t) => s+(logged[t.id]||0), 0);
-    const tg = ts.reduce((s,t) => s+t.target*60, 0);
-    return `<div class="domrow" style="--c:var(${d.v})">
-      <div class="nm"><span class="dot" style="background:var(${d.v})"></span>${d.name}</div>
-      <div class="meter"><div class="fill" style="width:${tg?Math.min(100,lg/tg*100):0}%"></div></div>
-      <div class="n">${hm(lg)} / ${hm(tg)}</div></div>`;
-  }).join("");
-
-  const trackRows = S.cfg.tracks.map(t => {
-    const lg = logged[t.id]||0, tg = t.target*60;
-    return `<div class="trow" style="--c:var(${tv(t.id)})">
-      <div><div class="nm"><span class="dot" style="background:var(${tv(t.id)})"></span><span>${esc(t.name)}</span></div>
-        <div class="nx">${esc(t.next||"")}</div></div>
-      <div class="mw"><div class="meter"><div class="fill" style="width:${tg?Math.min(100,lg/tg*100):0}%"></div>
-        ${plan[t.id]&&tg?`<div class="notch" style="left:${Math.min(100,plan[t.id]/tg*100)}%"></div>`:""}</div></div>
-      <div class="n">${hm(lg)} / ${hm(tg)}</div></div>`;
-  }).join("");
-
-  const unplanned = S.tasks.items.filter(t => !t.done && !t.due)
-    .sort((a,b) => a.p-b.p).slice(0,12);
-  const schedule = unplanned.length ? `<div class="card" style="margin-top:18px">
-    <div class="ch"><h3>Give these a day</h3><span class="sp"></span>
-      <span class="lab">${S.tasks.items.filter(t => !t.done && !t.due).length} unscheduled</span></div>
-    ${unplanned.map(t => `<div class="prop" style="--c:var(${tv(t.k)})">
-      <div><div class="tt" style="font-weight:700;font-size:14px">${esc(t.t)}</div>
-        <div class="mt" style="font-size:11.5px;color:var(--ink-3);margin-top:2px">
-          ${esc(track(t.k).name)}${t.est?" · "+hm(t.est):""} · ${PRIO[t.p]}</div>
-        <div class="days">${dayChips("", "ed", t.id)}</div></div>
-      <button class="pencil" data-edit="${t.id}" aria-label="Edit" title="Edit">✎</button>
-    </div>`).join("")}
-  </div>` : "";
-
-  const wkTasks = MONSUN.reduce((n,d,i) => n + assignedTo(ymd(addDays(mon,i))).length, 0);
-  return `<div class="h2"><h2>Your week</h2>
-    <span class="sub">${wkTasks ? wkTasks+" task"+(wkTasks===1?"":"s")+" assigned across the week"
-      : "nothing assigned yet — give your backlog days below"}</span></div>
-  <div class="wk">${days}</div>
-  ${schedule}
-  <div class="legend" style="margin:16px 0 22px">
-    ${DOMAINS.map(d => `<span><i style="background:var(${d.v})"></i>${d.name}</span>`).join("")}</div>
-
-  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
-    <div class="card"><div class="ch"><h3>Where the week is going</h3></div>
-      <div class="grid" style="gap:13px">${domBars}</div></div>
-    <div class="card"><div class="ch"><h3>Track by track</h3><span class="sp"></span>
-      <span class="lab">logged / target</span></div>${trackRows}</div>
-  </div>`;
-}
-
 /* ═══ BACKLOG ════════════════════════════════════════════════════════════ */
-function taskRow(t){
+function taskRow(t, inToday){
   if (S.editing === t.id) return taskEditor(t);
-  const b = bucket(t);
-  const day = t.due
-    ? (t.due === ymd(new Date()) ? "Today"
-      : t.due === ymd(addDays(new Date(),1)) ? "Tomorrow"
-      : DAYSHORT[parseYmd(t.due).getDay()] + " " + parseYmd(t.due).getDate())
-    : "";
+  const carried = !t.done && t.due && t.due < ymd(new Date());
   return `<div class="item ${t.done?"done":""}" style="--c:var(${tv(t.k)})">
     <button class="box" data-task="${t.id}" aria-pressed="${!!t.done}" style="--c:var(${tv(t.k)})"
       aria-label="Done: ${esc(t.t)}">✓</button>
     <div class="sp"><div class="tt">${esc(t.t)}</div>
       <div class="mt"><span>${esc(track(t.k).name)}</span>
         ${t.est?`<span class="mono">${hm(t.est)}</span>`:""}
-        ${day?`<span class="${b==="late"?"tag late":"mono"}">${b==="late"?"late · ":""}${day}</span>`
-             :`<span class="dim">no day</span>`}
         <span>${PRIO[t.p]||""}</span>
+        ${carried?`<span class="tag">carried over</span>`:""}
         ${t.rep?`<span class="tag rep">↻ ${esc(repeatLabel(t))}</span>`:""}</div></div>
+    ${t.done?"":`<button class="pencil move" data-move="${t.id}"
+      aria-label="${inToday?"Move to backlog":"Add to today"}"
+      title="${inToday?"Move to the backlog":"Add to today"}">${inToday?"↓":"↑"}</button>`}
     <button class="pencil" data-edit="${t.id}" aria-label="Edit ${esc(t.t)}" title="Edit">✎</button>
     <button class="x" data-del="${t.id}" aria-label="Delete">×</button></div>`;
 }
@@ -939,17 +854,11 @@ function taskEditor(t){
           `<button class="chipday ${n===t.p?"on":""}" data-ep="${t.id}:${n}">${PRIO[n]}</button>`).join("")}</div>
       </div>
       <div class="row" style="gap:5px;margin-top:10px">
-        <span class="lab" style="margin-right:2px">Day</span>
-        ${dayChips(t.due, "ed", t.id)}
-        <input type="date" id="ex-${t.id}" value="${esc(t.due||"")}" aria-label="Or pick any date"
-          style="padding:5px 8px">
-      </div>
-      <div class="row" style="gap:5px;margin-top:9px">
         <span class="lab" style="margin-right:2px">Repeats</span>
         ${Object.keys(REPEATS).map(r => `<button class="chipday ${(t.rep||"")===r?"on":""}"
           data-er="${t.id}:${r}">${REPEATS[r]}</button>`).join("")}
-        ${t.rep === "weekly" && t.due
-          ? `<span class="dim" style="font-size:12px">every ${DAYNAME[parseYmd(t.due).getDay()]}</span>` : ""}
+        ${t.rep && t.rep !== "daily"
+          ? `<span class="dim" style="font-size:12px">next: ${esc(repeatLabel(t))}</span>` : ""}
       </div>
       <div class="row" style="margin-top:12px">
         <button class="btn solid sm" data-save="${t.id}">Save</button>
@@ -960,27 +869,37 @@ function taskEditor(t){
     </div></div>`;
 }
 
+/* the one row that adds a task, used on both Today and Backlog */
+function addRow(where){
+  return `<div class="addbar">
+    <input id="nt" placeholder="${where==="today"?"What are you doing today?":"What needs doing, some day?"}"
+      aria-label="Task">
+    <select id="nk" aria-label="Track">${trackOpts()}</select>
+    <input id="ne" type="number" min="0" step="15" placeholder="min" class="mono" aria-label="Minutes">
+    <button class="btn solid" id="nadd" data-where="${where}">Add</button></div>
+  <div class="row" style="margin-top:11px"><span class="dim" style="font-size:12px">Priority</span>
+    ${[1,2,3].map(n=>`<button class="chipday ${n===S.prio?"on":""}" data-prio="${n}">${PRIO[n]}</button>`).join("")}
+  </div>`;
+}
+
 function dumpCard(){
-  const P = S.dump.proposals;
+  const P = S.dump.proposals, td = ymd(new Date());
   return `<div class="card dump">
     <div class="ch"><h3>Brain dump</h3><span class="sp"></span>
       <span class="lab">get it out of your head</span></div>
     <textarea id="dump" rows="5" aria-label="Brain dump"
-      placeholder="Just write. Everything you are carrying — a paragraph, a list, half-sentences. It gets broken into tasks you can schedule.">${esc(S.dump.text)}</textarea>
+      placeholder="Just write. Everything you are carrying — a paragraph, a list, half-sentences. It gets broken into tasks.">${esc(S.dump.text)}</textarea>
     <div class="row" style="margin-top:12px">
       <button class="btn solid" id="dbreak" ${S.dump.busy?"disabled":""}>${
         S.dump.busy?"Breaking it down…":"Break it into tasks"}</button>
       ${S.dump.text?`<button class="btn quiet sm" id="dclear">Clear</button>`:""}
     </div>
     ${P.length ? `<div class="props">
-      <div class="row" style="margin-bottom:12px">
-        <span class="lab">${P.length} task${P.length===1?"":"s"} — edit, give each a day, then add</span>
+      <div class="row" style="margin-bottom:14px">
+        <span class="lab">${P.length} task${P.length===1?"":"s"} — edit them, then add</span>
         <span class="sp"></span>
-        <button class="btn solid sm" id="paddall">Add all to backlog</button>
-      </div>
-      <div class="row" style="margin-bottom:14px;gap:6px">
-        <span class="dim" style="font-size:12px">Put them all on</span>
-        ${dayChips("__none__", "pall", "x")}
+        <button class="btn quiet sm" id="pallb">All → backlog</button>
+        <button class="btn solid sm" id="pallt">All → today</button>
       </div>
       ${P.map((x,i) => `<div class="prop" style="--c:var(${tv(x.k)})">
         <div>
@@ -990,49 +909,53 @@ function dumpCard(){
             <input class="mono" type="number" min="0" step="15" data-pz="${i}" value="${x.est||""}"
               placeholder="min" aria-label="Minutes">
           </div>
-          <div class="days">${[1,2,3].map(n =>
-            `<button class="chipday ${n===x.p?"on":""}" data-pp="${i}:${n}">${PRIO[n]}</button>`).join("")}</div>
-          <div class="days">${dayChips(x.day, "pd", i)}</div>
+          <div class="days">
+            ${[1,2,3].map(n => `<button class="chipday ${n===x.p?"on":""}"
+              data-pp="${i}:${n}">${PRIO[n]}</button>`).join("")}
+            <span style="width:10px"></span>
+            <button class="chipday ${x.day?"on":""}" data-pd="${i}:${td}">Today</button>
+            <button class="chipday ${x.day?"":"on"}" data-pd="${i}:">Backlog</button>
+          </div>
         </div>
         <button class="x" data-px="${i}" aria-label="Remove">×</button>
       </div>`).join("")}
+      <div class="row" style="margin-top:14px">
+        <button class="btn solid" id="paddall">Add ${P.length} to my list</button>
+        <span class="dim" style="font-size:12.5px">${P.filter(x=>x.day).length} to today ·
+          ${P.filter(x=>!x.day).length} to the backlog</span>
+      </div>
     </div>` : ""}
   </div>`;
 }
 
 function viewBacklog(){
-  const groups = [["late","Late"],["today","Today"],["week","This week"],["later","Later"],["done","Done"]];
-  const items = S.tasks.items.slice()
-    .sort((a,b) => (a.p-b.p) || String(a.due||"9").localeCompare(String(b.due||"9")));
-  const open = items.filter(t => !t.done).reduce((s,t) => s+(t.est||0), 0);
-  const noday = items.filter(t => !t.done && !t.due).length;
-
-  const body = groups.map(([g,label]) => {
-    const l = items.filter(t => bucket(t) === g);
-    if (!l.length) return "";
-    return `<div style="margin-top:22px">
-      <div class="row" style="margin-bottom:10px"><span class="lab">${label}</span>
-        <span class="dim mono" style="font-size:11px">${l.length} · ${hm(l.reduce((s,t)=>s+(t.est||0),0))}</span></div>
-      <div class="list">${l.map(taskRow).join("")}</div></div>`;
-  }).join("");
+  const items = backlogList().sort((a,b) => a.p-b.p);
+  const done = S.tasks.items.filter(t => t.done)
+    .sort((a,b) => String(b.doneAt||"").localeCompare(String(a.doneAt||""))).slice(0,15);
+  const mins = items.reduce((s,t) => s+(t.est||0), 0);
 
   return `<div class="h2"><h2>Backlog</h2>
-    <span class="sub">${open ? hm(open)+" open · about "+(open/360).toFixed(1)+" evenings" : "nothing open"}${
-      noday ? " · "+noday+" with no day" : ""}</span></div>
+    <span class="sub">${items.length ? items.length+" waiting · "+hm(mins)+" · about "
+      +(mins/240).toFixed(1)+" evenings" : "nothing waiting"}</span></div>
 
   ${dumpCard()}
 
   <div class="card" style="margin-top:16px">
-    <div class="addbar">
-      <input id="nt" placeholder="Or add one straight away" aria-label="Task">
-      <select id="nk" aria-label="Track">${trackOpts()}</select>
-      <input id="nd" type="date" aria-label="Day">
-      <input id="ne" type="number" min="0" step="15" placeholder="min" class="mono" aria-label="Minutes">
-      <button class="btn solid" id="nadd">Add</button></div>
-    <div class="row" style="margin-top:11px"><span class="dim" style="font-size:12px">Priority</span>
-      ${[1,2,3].map(n=>`<button class="chipday ${n===S.prio?"on":""}" data-prio="${n}">${PRIO[n]}</button>`).join("")}</div>
+    <div class="ch"><h3>Add to the backlog</h3></div>
+    ${addRow("backlog")}
   </div>
-  ${body || `<div class="empty" style="margin-top:22px">Backlog is empty.</div>`}`;
+
+  <div style="margin-top:22px">
+    <div class="row" style="margin-bottom:10px"><span class="lab">Waiting for a day</span>
+      <span class="dim" style="font-size:12px">↑ moves one onto today</span></div>
+    ${items.length ? `<div class="list">${items.map(t => taskRow(t,false)).join("")}</div>`
+      : `<div class="empty">Nothing waiting. Everything you are carrying is either on today or finished.</div>`}
+  </div>
+
+  ${done.length ? `<div style="margin-top:26px">
+    <div class="row" style="margin-bottom:10px"><span class="lab">Recently done</span>
+      <span class="dim mono" style="font-size:11px">${done.length}</span></div>
+    <div class="list">${done.map(t => taskRow(t,false)).join("")}</div></div>` : ""}`;
 }
 
 /* turn free text into proposed tasks — Claude when available, lines otherwise */
@@ -1062,22 +985,17 @@ async function breakDown(){
     S.dump.proposals = splitLines(text); S.dump.busy = false; render();
     return toast("Split by line — edit anything that came out wrong.");
   }
-  const days = Array.from({length:7}, (_,i) => {
-    const d = addDays(new Date(), i);
-    return ymd(d) + " (" + DAYNAME[d.getDay()] + ")";
-  });
   try {
     const out = await sample.json(
       "Turn this brain dump into a concrete task list.\n\n" +
       "Track ids you may use: " + S.cfg.tracks.map(t => t.id+" = "+t.name).join("; ") + ".\n" +
-      "Days available: " + days.join(", ") + ". Sunday is a rest day — never assign work to it. " +
-      "Any billing work happens on Mondays only — give billing tasks a Monday or no day at all.\n\n" +
+      "Today is " + DAYNAME[new Date().getDay()] + ".\n\n" +
       "Return ONLY a JSON array. Each element: {\"t\": an actionable title starting with a verb, " +
       "under 80 characters; \"k\": one track id from the list; \"est\": realistic minutes as a multiple " +
-      "of 15; \"p\": 1 for must, 2 for should, 3 for someday; \"day\": a YYYY-MM-DD from the list, or \"\" }.\n\n" +
+      "of 15; \"p\": 1 for must, 2 for should, 3 for someday; \"day\": \"" + ymd(new Date()) +
+      "\" when it plainly has to happen today, otherwise \"\" }.\n\n" +
       "Rules: split anything over 2 hours into separate tasks. Do not invent work that is not in the dump. " +
-      "Do not merge unrelated items. Assign a day only where the dump implies a deadline or an obvious " +
-      "order, otherwise \"\". Spread assigned days out; never put more than 3 hours of tasks on one day.\n\n" +
+      "Do not merge unrelated items.\n\n" +
       "Dump:\n" + text,
       { modelTier:"default" });
     const props = cleanProposals(out);
@@ -1147,7 +1065,7 @@ function narrate(R){
     :adh>=40?", so the plan is roughly right but the evenings are losing.":". The plan is fiction right now; cut it rather than try harder."}`);
   if (fd) out.push(`On what you said matters most: <b>${fh} of ${fd}</b> faith checks. ${fh/fd>=.7?"Hold that.":"Move it earlier, before the day can take it."}`);
   if (starved.length) out.push(`<b>${starved.map(s=>esc(s.name)).join("</b> and <b>")}</b> got almost nothing — ${starved.length>1?"pick one and give it":"give it"} a named block next week.`);
-  if (R.late) out.push(`<b>${R.late}</b> ${R.late===1?"task is":"tasks are"} late. Reschedule on purpose or delete.`);
+  if (R.late) out.push(`<b>${R.late}</b> ${R.late===1?"task has":"tasks have"} been carried over from an earlier day. Do ${R.late===1?"it":"them"} first, or delete ${R.late===1?"it":"them"} honestly.`);
   if (avg) out.push(`Average energy <b>${avg.toFixed(1)}/5</b>${avg<3?" — watch this before pushing harder on anything.":"."}`);
   return out.join(" ");
 }
@@ -1207,7 +1125,7 @@ function viewReport(){
     <div class="stat"><div class="k">${adh}%</div><div class="l">of the day's plan kept</div></div>
     <div class="stat"><div class="k" style="color:var(--d-faith)">${fd?fh+"/"+fd:"—"}</div><div class="l">faith checks</div></div>
     <div class="stat"><div class="k">${R.tasksDone}</div><div class="l">tasks finished</div></div>
-    <div class="stat"><div class="k" style="${R.late?"color:var(--late)":""}">${R.late}</div><div class="l">late</div></div>
+    <div class="stat"><div class="k" style="${R.late?"color:var(--late)":""}">${R.late}</div><div class="l">carried over</div></div>
   </div>
 
   <div class="grid" style="margin-bottom:18px">
@@ -1302,8 +1220,8 @@ function viewSetup(){
 }
 
 /* ═══ RENDER ═════════════════════════════════════════════════════════════ */
-const TABS = [["today","Today"],["week","Week"],["backlog","Backlog"],["report","Report"]];
-const VIEWS = { today:viewToday, week:viewWeek, backlog:viewBacklog, report:viewReport, setup:viewSetup };
+const TABS = [["today","Today"],["backlog","Backlog"],["report","Report"]];
+const VIEWS = { today:viewToday, backlog:viewBacklog, report:viewReport, setup:viewSetup };
 
 function render(){
   $("#tabs").innerHTML = TABS.map(([id,l]) =>
@@ -1408,23 +1326,12 @@ function wire(root){
     saveTasks(); render();
     toast(r ? "Repeats " + repeatLabel(t) : "No longer repeats");
   });
-  /* put the whole dump on one day in a single tap */
-  $$("[data-pall]", root).forEach(b => b.onclick = () => {
-    const day = cut(b.dataset.pall)[1];
-    S.dump.proposals.forEach(pr => {
-      pr.day = (day && isBilling({ label:pr.t }) && parseYmd(day).getDay() !== 1)
-        ? ymd(nextMonday()) : day;
-    });
-    saveDump(); render();
-    toast(day ? "All set to " + parseYmd(day).toLocaleDateString(undefined,
-      { weekday:"long", month:"short", day:"numeric" }) : "Days cleared");
-  });
-  const pl = $("#pullate", root);
-  if (pl) pl.onclick = () => {
-    const late = S.tasks.items.filter(t => bucket(t) === "late");
-    late.forEach(t => { t.due = isBilling({ label:t.t }) ? ymd(nextMonday()) : date; });
-    saveTasks(); render(); toast(late.length + " pulled into today");
-  };
+  /* send the whole dump one way or the other */
+  const bulk = (btn, day) => { const e = $(btn, root); if (!e) return;
+    e.onclick = () => { S.dump.proposals.forEach(pr => pr.day = day); saveDump(); render();
+      toast(day ? "All set for today" : "All going to the backlog"); }; };
+  bulk("#pallt", ymd(new Date()));
+  bulk("#pallb", "");
   const gd = $("#gotodump", root);
   if (gd) gd.onclick = () => { S.tab = "backlog"; render();
     setTimeout(() => { const d = $("#dump"); if (d) d.focus(); }, 40); };
@@ -1432,18 +1339,13 @@ function wire(root){
     const [id,n] = cut(b.dataset.ep), t = findTask(id);
     if (t) { t.p = +n; saveTasks(); render(); }
   });
-  /* one tap assigns a day — used by the editor and by "Give these a day" */
-  $$("[data-ed]", root).forEach(b => b.onclick = () => {
-    const [id,day] = cut(b.dataset.ed), t = findTask(id);
+  /* one button moves a task between today and the backlog */
+  $$("[data-move]", root).forEach(b => b.onclick = () => {
+    const t = findTask(b.dataset.move);
     if (!t) return;
-    if (day && isBilling({ label:t.t }) && parseYmd(day).getDay() !== 1) {
-      t.due = ymd(nextMonday()); saveTasks(); render();
-      return toast("Billing is Mondays — moved to " + parseYmd(t.due)
-        .toLocaleDateString(undefined,{ month:"short", day:"numeric" }));
-    }
-    t.due = day; saveTasks(); render();
-    toast(day ? "Scheduled for " + parseYmd(day).toLocaleDateString(undefined,
-      { weekday:"long", month:"short", day:"numeric" }) : "Day cleared");
+    t.due = onToday(t) ? "" : ymd(new Date());
+    saveTasks(); render();
+    toast(t.due ? "On today's list" : "Back in the backlog");
   });
   $$("[data-save]", root).forEach(b => b.onclick = () => {
     const id = b.dataset.save, t = findTask(id);
@@ -1453,13 +1355,7 @@ function wire(root){
     t.t = title;
     t.k = $("#ec-"+id, root).value;
     t.est = +$("#ez-"+id, root).value || 0;
-    const d = $("#ex-"+id, root).value;
-    if (d !== t.due) t.due = d;
     S.editing = null; saveTasks(); render(); toast("Saved");
-  });
-  $$("[id^='ex-']", root).forEach(i => i.onchange = () => {
-    const t = findTask(i.id.slice(3));
-    if (t) { t.due = i.value; saveTasks(); render(); }
   });
 
   /* ── brain dump ─────────────────────────────────────────────────────── */
@@ -1478,9 +1374,6 @@ function wire(root){
   });
   $$("[data-pd]", root).forEach(b => b.onclick = () => {
     const [i,day] = cut(b.dataset.pd), pr = S.dump.proposals[+i];
-    if (day && isBilling({ label:pr.t }) && parseYmd(day).getDay() !== 1) {
-      pr.day = ymd(nextMonday()); render(); return toast("Billing is Mondays.");
-    }
     pr.day = day; saveDump(); render();
   });
   $$("[data-px]", root).forEach(b => b.onclick = () => {
@@ -1502,8 +1395,10 @@ function wire(root){
       const t = $("#nt", root).value.trim();
       if (!t) return $("#nt", root).focus();
       S.tasks.items.push({ id:Math.random().toString(36).slice(2,9), t, k:$("#nk",root).value,
-        due:$("#nd",root).value||"", est:+$("#ne",root).value||0, p:S.prio, rep:"", done:false });
+        due: nadd.dataset.where === "today" ? ymd(new Date()) : "",
+        est:+$("#ne",root).value||0, p:S.prio, rep:"", done:false });
       saveTasks(); render();
+      setTimeout(() => { const i = $("#nt"); if (i) i.focus(); }, 30);
     };
     nadd.onclick = add;
     $("#nt", root).onkeydown = e => { if (e.key === "Enter") add(); };

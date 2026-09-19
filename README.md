@@ -4,19 +4,17 @@ A single-file weekly planner and time tracker, built for someone running a full-
 job alongside contract work, research, and graduate-school applications — where the
 problem is not a missing to-do list but no honest picture of where the week went.
 
-The design premise: **you write down everything you are carrying, assign each piece a
-day, and the day is then made of exactly that.** No prescribed schedule to fail — the
-app has no opinion about when you work until you give it one. Ticking a task logs its
-estimate, so on Saturday the report can show where the hours really went against what
-you assigned.
+The design premise: **you build today's list yourself, and everything else waits in a
+backlog until you choose to pull it in.** There is no calendar, no prescribed schedule,
+and no week view to keep tidy — two places only, today and later. Ticking a task logs
+its estimate, so the report can still show where the hours went.
 
 ## What it does
 
 | View | Purpose |
 |---|---|
-| **Today** | A verse for the date, a load bar with a four-hour mark on it, and the tasks assigned to today. Ticking one logs its estimate to its track. Plus daily checks with streaks, a stopwatch, a reading-plan pacer, and a pull-in button for anything late. |
-| **Week** | Seven days, each holding its assigned tasks, plus a "give these a day" card that schedules the rest of the backlog a tap at a time. |
-| **Backlog** | A brain dump box that turns free text into editable, schedulable tasks — plus every task editable in place: title, track, estimate, priority, and the day it happens. |
+| **Today** | A verse for the date, a load bar marked at four hours, and today's list — which you type straight into the card. Ticking a task logs its estimate to its track; `↓` drops one back to the backlog. Plus daily checks with streaks, a stopwatch and a reading-plan pacer. |
+| **Backlog** | A brain dump box that turns free text into editable tasks bound for today or the backlog, and everything still waiting. `↑` pulls one onto today. Every task edits in place: title, track, estimate, priority, repeat. |
 | **Report** | Hours by track against the planned mark, a hit/due grid for the daily checks, plan adherence, energy, a written read of the week, and the week's raw log. |
 
 Setup lives behind the gear in the header, not in the tab bar: weekly hour targets,
@@ -29,15 +27,6 @@ and spawns the next occurrence at the next matching date, so there is no backgro
 materialisation and no chance of duplicates — the next instance exists only because
 the last one was finished.
 
-### Billing is Mondays
-
-A hard rule in the seed rhythm, enforced in three places: the day chips bounce a
-billing task landing on any other day back to the next Monday, the brain-dump prompt
-carries the rule, and a config migration (`v1 → v2`) strips billing blocks from every
-other day of a rhythm already in the store. That migration is surgical — it keeps
-edits made elsewhere in the week — but it does rebuild Monday evening from 4pm when
-the day holds under four hours of billing, since Monday now carries the whole job.
-
 ### Brain dump → scheduled tasks
 
 The backlog opens with a free-text box. Write a paragraph, a list, or half-sentences;
@@ -47,10 +36,9 @@ anything lands in the backlog. It asks Claude to do the splitting when the host 
 grants the `sample` capability, and falls back to splitting on lines and sentences
 otherwise, so the feature works either way.
 
-Scheduling is one tap: every task and every proposal carries a row of day chips
-(Today, Tomorrow, then the next five days, plus *No day*). Sunday chips are marked
-`·rest` and greyed, so putting work there is a deliberate act rather than an accident.
-Assigned tasks then appear under their day in the Week view.
+Each proposal goes one of two ways — **today** or **the backlog** — with bulk buttons
+for both. A task carried over from an earlier day stays on today's list, tagged
+`carried over`, rather than needing to be rescheduled.
 
 ### A verse for each day
 
@@ -90,7 +78,7 @@ when one is granted, and `localStorage` otherwise. The same five paths either wa
 
 ```
 app/config      tracks, weekly targets, habits, reading plan, optional fixed blocks
-app/tasks       the backlog — every task carries its day, estimate and repeat rule
+app/tasks       every task: today's date or "" for the backlog, plus estimate and repeat
 app/dump        the brain dump and its pending proposals, so a reload never loses them
 app/checks      { habitId: { "YYYY-MM-DD": 1 } }  — drives streaks and the report grid
 app/timer       the running stopwatch, so a reload doesn't lose it
