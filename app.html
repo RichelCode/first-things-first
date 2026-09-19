@@ -235,6 +235,49 @@ table.data td.n{font-family:var(--mono);text-align:right;font-variant-numeric:ta
 .kv{display:grid;grid-template-columns:minmax(0,1fr) 108px;gap:10px 14px;align-items:center;font-size:14px}
 textarea.json{width:100%;font-family:var(--mono);font-size:12px;line-height:1.55;min-height:250px}
 
+/* ── scripture banner ───────────────────────────────────────────────────── */
+.verse{background:linear-gradient(120deg,var(--pink-wash),#F3E9FF 78%);border-radius:var(--r);
+  padding:17px 22px 19px;box-shadow:var(--sh);margin-bottom:18px}
+.verse .vt{font-family:var(--serif);font-size:18.5px;line-height:1.5;margin-top:7px;max-width:70ch;
+  font-variation-settings:"SOFT" 100,"WONK" 1}
+.verse .vr{font-size:12.5px;font-weight:700;color:var(--d-faith);margin-top:9px;letter-spacing:.02em}
+
+/* ── inline task editor ─────────────────────────────────────────────────── */
+.item.edit{align-items:stretch;box-shadow:var(--sh-lift)}
+.erow{display:grid;grid-template-columns:minmax(0,1fr) 86px auto;gap:9px;align-items:center;margin-top:9px}
+@media (max-width:640px){.erow{grid-template-columns:1fr 86px}.erow>*:last-child{grid-column:1/-1}}
+.chipday{border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;background:var(--surface-2);
+  color:var(--ink-2)}
+.chipday:hover{background:var(--surface-3);color:var(--pink-deep)}
+.chipday.on{background:var(--pink);color:#fff}
+.chipday.rest{color:var(--ink-3);opacity:.7}
+.chipday.rest::after{content:" ·rest";font-size:9.5px;letter-spacing:.04em}
+.chipday.rest.on{background:var(--ink-3);color:#fff;opacity:1}
+.pencil{width:28px;height:28px;border-radius:50%;color:var(--ink-3);font-size:13px;flex:0 0 auto;
+  display:grid;place-items:center}
+.pencil:hover{background:var(--surface-2);color:var(--pink-deep)}
+
+/* ── brain dump ─────────────────────────────────────────────────────────── */
+.dump textarea{width:100%;font-size:15px;line-height:1.6;min-height:120px;border-radius:var(--r-2);
+  border-color:var(--border-2)}
+.props{margin-top:18px;border-top:1.5px solid var(--border);padding-top:16px}
+.prop{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;
+  background:var(--surface-2);border-radius:var(--r-2);padding:12px 14px;margin-bottom:8px;
+  border-left:5px solid var(--c)}
+.prop input[type=text]{width:100%;font-weight:700;background:var(--surface)}
+.prop .pr2{display:grid;grid-template-columns:minmax(0,1fr) 82px;gap:8px;margin-top:8px}
+.prop .days{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+
+/* ── tasks inside the week grid ─────────────────────────────────────────── */
+.wt{display:flex;gap:7px;align-items:flex-start;font-size:11.5px;line-height:1.35;
+  background:var(--surface-2);border-radius:8px;padding:6px 8px;border-left:4px solid var(--c)}
+.wt .tb{width:15px;height:15px;border-radius:50%;border:2px solid var(--border-2);background:var(--surface);
+  flex:0 0 auto;padding:0;margin-top:1px}
+.wt .tb:hover{border-color:var(--c)}
+.wt.late{border-left-color:var(--late)}
+.day .sect{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);
+  margin-top:4px}
+
 #tip{position:fixed;z-index:80;pointer-events:none;background:var(--ink);color:#fff;font-size:12px;
   font-weight:600;padding:7px 11px;border-radius:9px;max-width:250px;opacity:0;transition:opacity .12s;
   box-shadow:var(--sh-lift)}
@@ -356,6 +399,58 @@ const SEED_CONFIG = () => ({
   bible:{ start:new Date().getFullYear()+"-01-01", total:365, day:0 },
 });
 
+/* ── scripture (KJV — public domain; swap the whole list in Setup) ──────── */
+const VERSES = [
+  ["Joshua 1:9","Have not I commanded thee? Be strong and of a good courage; be not afraid, neither be thou dismayed: for the LORD thy God is with thee whithersoever thou goest."],
+  ["Philippians 4:13","I can do all things through Christ which strengtheneth me."],
+  ["Proverbs 3:5-6","Trust in the LORD with all thine heart; and lean not unto thine own understanding. In all thy ways acknowledge him, and he shall direct thy paths."],
+  ["Isaiah 41:10","Fear thou not; for I am with thee: be not dismayed; for I am thy God: I will strengthen thee; yea, I will help thee; yea, I will uphold thee with the right hand of my righteousness."],
+  ["Jeremiah 29:11","For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil, to give you an expected end."],
+  ["Psalm 46:1","God is our refuge and strength, a very present help in trouble."],
+  ["Matthew 6:33","But seek ye first the kingdom of God, and his righteousness; and all these things shall be added unto you."],
+  ["Matthew 11:28","Come unto me, all ye that labour and are heavy laden, and I will give you rest."],
+  ["Psalm 121:1-2","I will lift up mine eyes unto the hills, from whence cometh my help. My help cometh from the LORD, which made heaven and earth."],
+  ["Isaiah 40:31","But they that wait upon the LORD shall renew their strength; they shall mount up with wings as eagles; they shall run, and not be weary; and they shall walk, and not faint."],
+  ["Psalm 37:5","Commit thy way unto the LORD; trust also in him; and he shall bring it to pass."],
+  ["2 Timothy 1:7","For God hath not given us the spirit of fear; but of power, and of love, and of a sound mind."],
+  ["Romans 8:28","And we know that all things work together for good to them that love God, to them who are the called according to his purpose."],
+  ["Psalm 23:1","The LORD is my shepherd; I shall not want."],
+  ["Galatians 6:9","And let us not be weary in well doing: for in due season we shall reap, if we faint not."],
+  ["Colossians 3:23","And whatsoever ye do, do it heartily, as to the Lord, and not unto men."],
+  ["Psalm 119:105","Thy word is a lamp unto my feet, and a light unto my path."],
+  ["Proverbs 16:3","Commit thy works unto the LORD, and thy thoughts shall be established."],
+  ["Philippians 4:6-7","Be careful for nothing; but in every thing by prayer and supplication with thanksgiving let your requests be made known unto God. And the peace of God, which passeth all understanding, shall keep your hearts and minds through Christ Jesus."],
+  ["1 Corinthians 15:58","Therefore, my beloved brethren, be ye stedfast, unmoveable, always abounding in the work of the Lord, forasmuch as ye know that your labour is not in vain in the Lord."],
+  ["Psalm 27:1","The LORD is my light and my salvation; whom shall I fear? the LORD is the strength of my life; of whom shall I be afraid?"],
+  ["Deuteronomy 31:6","Be strong and of a good courage, fear not, nor be afraid of them: for the LORD thy God, he it is that doth go with thee; he will not fail thee, nor forsake thee."],
+  ["Psalm 55:22","Cast thy burden upon the LORD, and he shall sustain thee: he shall never suffer the righteous to be moved."],
+  ["Isaiah 43:2","When thou passest through the waters, I will be with thee; and through the rivers, they shall not overflow thee."],
+  ["Lamentations 3:22-23","It is of the LORD\u2019s mercies that we are not consumed, because his compassions fail not. They are new every morning: great is thy faithfulness."],
+  ["Psalm 118:24","This is the day which the LORD hath made; we will rejoice and be glad in it."],
+  ["James 1:5","If any of you lack wisdom, let him ask of God, that giveth to all men liberally, and upbraideth not; and it shall be given him."],
+  ["Hebrews 12:1","Let us lay aside every weight, and the sin which doth so easily beset us, and let us run with patience the race that is set before us."],
+  ["Psalm 90:17","And let the beauty of the LORD our God be upon us: and establish thou the work of our hands upon us; yea, the work of our hands establish thou it."],
+  ["Nehemiah 8:10","Neither be ye sorry; for the joy of the LORD is your strength."],
+  ["Zephaniah 3:17","The LORD thy God in the midst of thee is mighty; he will save, he will rejoice over thee with joy; he will rest in his love, he will joy over thee with singing."],
+  ["Psalm 16:8","I have set the LORD always before me: because he is at my right hand, I shall not be moved."],
+  ["Proverbs 19:21","There are many devices in a man\u2019s heart; nevertheless the counsel of the LORD, that shall stand."],
+  ["Ecclesiastes 3:1","To every thing there is a season, and a time to every purpose under the heaven."],
+  ["Psalm 32:8","I will instruct thee and teach thee in the way which thou shalt go: I will guide thee with mine eye."],
+  ["Isaiah 26:3","Thou wilt keep him in perfect peace, whose mind is stayed on thee: because he trusteth in thee."],
+  ["1 Peter 5:7","Casting all your care upon him; for he careth for you."],
+  ["Psalm 5:3","My voice shalt thou hear in the morning, O LORD; in the morning will I direct my prayer unto thee, and will look up."],
+  ["Micah 6:8","He hath shewed thee, O man, what is good; and what doth the LORD require of thee, but to do justly, and to love mercy, and to walk humbly with thy God?"],
+  ["Romans 12:12","Rejoicing in hope; patient in tribulation; continuing instant in prayer."],
+  ["Psalm 139:14","I will praise thee; for I am fearfully and wonderfully made: marvellous are thy works; and that my soul knoweth right well."],
+  ["2 Corinthians 12:9","My grace is sufficient for thee: for my strength is made perfect in weakness."],
+  ["Habakkuk 2:3","For the vision is yet for an appointed time, but at the end it shall speak, and not lie: though it tarry, wait for it; because it will surely come, it will not tarry."],
+  ["Psalm 31:24","Be of good courage, and he shall strengthen your heart, all ye that hope in the LORD."],
+  ["Proverbs 4:23","Keep thy heart with all diligence; for out of it are the issues of life."],
+  ["Isaiah 30:21","And thine ears shall hear a word behind thee, saying, This is the way, walk ye in it, when ye turn to the right hand, and when ye turn to the left."],
+  ["Psalm 62:5","My soul, wait thou only upon God; for my expectation is from him."],
+  ["Joshua 1:8","This book of the law shall not depart out of thy mouth; but thou shalt meditate therein day and night, that thou mayest observe to do according to all that is written therein."],
+];
+
 /* ── dates ─────────────────────────────────────────────────────────────── */
 const DAYNAME  = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const DAYSHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -405,6 +500,7 @@ const Store = {
 const S = {
   cfg:null, tasks:{ items:[] }, checks:{}, week:{ entries:[], days:{} }, weekKey:"",
   timer:null, tab:"today", offset:0, showTable:false, narrative:"", prio:2,
+  dump:{ text:"", proposals:[], busy:false }, editing:null,
 };
 const track = id => S.cfg.tracks.find(t => t.id === id) || { id, name:id, dom:"life", target:0 };
 const domVar = id => (DOMAINS.find(d => d.id === id) || DOMAINS[3]).v;
@@ -467,6 +563,30 @@ function bucket(t){
   if (t.due < today) return "late";
   if (t.due === today) return "today";
   return t.due <= ymd(addDays(mondayOf(new Date()),6)) ? "week" : "later";
+}
+
+const dayOfYear = d => Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())
+  - new Date(d.getFullYear(),0,0))/86400000);
+function verseFor(d){
+  const l = S.cfg && Array.isArray(S.cfg.verses) && S.cfg.verses.length ? S.cfg.verses : VERSES;
+  const v = l[dayOfYear(d) % l.length];
+  return Array.isArray(v) ? v : [v && v.ref || "", v && v.text || String(v)];
+}
+const assignedTo = d => S.tasks.items.filter(t => !t.done && t.due === d);
+const trackOpts = sel => S.cfg.tracks.map(k =>
+  `<option value="${k.id}" ${sel===k.id?"selected":""}>${esc(k.name)}</option>`).join("");
+/* 7 days from today, plus "no day" — the whole scheduling gesture is one tap */
+function dayChips(sel, attr, id){
+  const out = [];
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(new Date(), i), k = ymd(d);
+    const rest = d.getDay() === 0;
+    out.push(`<button class="chipday ${sel===k?"on":""} ${rest?"rest":""}" data-${attr}="${id}:${k}"
+      ${rest?'title="Sunday is a rest day"':""}>${
+      i===0?"Today":i===1?"Tomorrow":DAYSHORT[d.getDay()]}</button>`);
+  }
+  out.push(`<button class="chipday ${sel?"":"on"}" data-${attr}="${id}:">No day</button>`);
+  return out.join("");
 }
 
 const esc = s => String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
@@ -555,6 +675,7 @@ function viewToday(){
     <span class="sub">${hm(planned)} planned · ${nDone}/${blocks.length} done · ${hm(loggedOn(date))} logged</span>
     ${dow===0?'<span class="tag live">rest day</span>':""}</div>
 
+  ${verseCard()}
   ${blocks.length ? dayArc(blocks, rec, nowMin) : ""}
 
   <div class="two">
@@ -587,6 +708,16 @@ function viewToday(){
           : `<div class="empty">Backlog is clear. Rest is allowed.</div>`}
       </div>
     </div>
+  </div>`;
+}
+
+function verseCard(){
+  const [ref, text] = verseFor(new Date());
+  if (!text) return "";
+  return `<div class="verse">
+    <span class="lab">Today's verse</span>
+    <p class="vt">\u201c${esc(text)}\u201d</p>
+    <p class="vr">${esc(ref)}<span class="dim" style="font-weight:600"> \u00b7 KJV</span></p>
   </div>`;
 }
 
@@ -653,6 +784,12 @@ function viewWeek(){
       <div class="dh"><span class="dn">${DAYSHORT[dow]}</span><span class="dd">${parseYmd(date).getDate()}</span></div>
       ${list.map(b => `<div class="wb" style="--c:var(${tv(b.track)})"><div class="bar"></div>
         <div><span class="tm">${clock(b.start)}</span>${esc(b.label)}</div></div>`).join("")}
+      ${(() => { const ts = assignedTo(date); if (!ts.length) return "";
+        const mins = ts.reduce((s,t) => s+(t.est||0), 0);
+        return `<div class="sect">tasks · ${hm(mins)}</div>` + ts.map(t =>
+          `<div class="wt ${t.due < today ? "late" : ""}" style="--c:var(${tv(t.k)})">
+            <button class="tb" data-task="${t.id}" aria-label="Done: ${esc(t.t)}"></button>
+            <span>${esc(t.t)}</span></div>`).join(""); })()}
       <div class="dim mono" style="font-size:10px;margin-top:auto;padding-top:7px">${hm(hrs)}</div>
     </div>`;
   }).join("");
@@ -681,9 +818,24 @@ function viewWeek(){
       <div class="n">${hm(lg)} / ${hm(tg)}</div></div>`;
   }).join("");
 
+  const unplanned = S.tasks.items.filter(t => !t.done && !t.due)
+    .sort((a,b) => a.p-b.p).slice(0,12);
+  const schedule = unplanned.length ? `<div class="card" style="margin-top:18px">
+    <div class="ch"><h3>Give these a day</h3><span class="sp"></span>
+      <span class="lab">${S.tasks.items.filter(t => !t.done && !t.due).length} unscheduled</span></div>
+    ${unplanned.map(t => `<div class="prop" style="--c:var(${tv(t.k)})">
+      <div><div class="tt" style="font-weight:700;font-size:14px">${esc(t.t)}</div>
+        <div class="mt" style="font-size:11.5px;color:var(--ink-3);margin-top:2px">
+          ${esc(track(t.k).name)}${t.est?" · "+hm(t.est):""} · ${PRIO[t.p]}</div>
+        <div class="days">${dayChips("", "ed", t.id)}</div></div>
+      <button class="pencil" data-edit="${t.id}" aria-label="Edit" title="Edit">✎</button>
+    </div>`).join("")}
+  </div>` : "";
+
   return `<div class="h2"><h2>Your week</h2>
     <span class="sub">five fixed points · one deep block an evening · Sunday holds nothing</span></div>
   <div class="wk">${days}</div>
+  ${schedule}
   <div class="legend" style="margin:16px 0 22px">
     ${DOMAINS.map(d => `<span><i style="background:var(${d.v})"></i>${d.name}</span>`).join("")}</div>
 
@@ -697,17 +849,87 @@ function viewWeek(){
 
 /* ═══ BACKLOG ════════════════════════════════════════════════════════════ */
 function taskRow(t){
+  if (S.editing === t.id) return taskEditor(t);
   const b = bucket(t);
+  const day = t.due
+    ? (t.due === ymd(new Date()) ? "Today"
+      : t.due === ymd(addDays(new Date(),1)) ? "Tomorrow"
+      : DAYSHORT[parseYmd(t.due).getDay()] + " " + parseYmd(t.due).getDate())
+    : "";
   return `<div class="item ${t.done?"done":""}" style="--c:var(${tv(t.k)})">
     <button class="box" data-task="${t.id}" aria-pressed="${!!t.done}" style="--c:var(${tv(t.k)})"
       aria-label="Done: ${esc(t.t)}">✓</button>
     <div class="sp"><div class="tt">${esc(t.t)}</div>
       <div class="mt"><span>${esc(track(t.k).name)}</span>
         ${t.est?`<span class="mono">${hm(t.est)}</span>`:""}
-        ${t.due?`<span class="${b==="late"?"tag late":"mono"}">${b==="late"?"late · ":""}${
-          parseYmd(t.due).toLocaleDateString(undefined,{month:"short",day:"numeric"})}</span>`:""}
+        ${day?`<span class="${b==="late"?"tag late":"mono"}">${b==="late"?"late · ":""}${day}</span>`
+             :`<span class="dim">no day</span>`}
         <span>${PRIO[t.p]||""}</span></div></div>
+    <button class="pencil" data-edit="${t.id}" aria-label="Edit ${esc(t.t)}" title="Edit">✎</button>
     <button class="x" data-del="${t.id}" aria-label="Delete">×</button></div>`;
+}
+
+function taskEditor(t){
+  return `<div class="item edit" style="--c:var(${tv(t.k)})">
+    <div class="sp">
+      <input type="text" id="ei-${t.id}" value="${esc(t.t)}" style="width:100%;font-weight:700"
+        aria-label="Task">
+      <div class="erow">
+        <select id="ec-${t.id}" aria-label="Track">${trackOpts(t.k)}</select>
+        <input id="ez-${t.id}" class="mono" type="number" min="0" step="15" value="${t.est||""}"
+          placeholder="min" aria-label="Minutes">
+        <div class="row" style="gap:5px">${[1,2,3].map(n =>
+          `<button class="chipday ${n===t.p?"on":""}" data-ep="${t.id}:${n}">${PRIO[n]}</button>`).join("")}</div>
+      </div>
+      <div class="row" style="gap:5px;margin-top:10px">
+        <span class="lab" style="margin-right:2px">Day</span>
+        ${dayChips(t.due, "ed", t.id)}
+        <input type="date" id="ex-${t.id}" value="${esc(t.due||"")}" aria-label="Or pick any date"
+          style="padding:5px 8px">
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn solid sm" data-save="${t.id}">Save</button>
+        <button class="btn quiet sm" data-cancel="1">Cancel</button>
+        <span class="sp"></span>
+        <button class="btn quiet sm" data-del="${t.id}" style="color:var(--late)">Delete</button>
+      </div>
+    </div></div>`;
+}
+
+function dumpCard(){
+  const P = S.dump.proposals;
+  return `<div class="card dump">
+    <div class="ch"><h3>Brain dump</h3><span class="sp"></span>
+      <span class="lab">get it out of your head</span></div>
+    <textarea id="dump" rows="5" aria-label="Brain dump"
+      placeholder="Just write. Everything you are carrying — a paragraph, a list, half-sentences. It gets broken into tasks you can schedule.">${esc(S.dump.text)}</textarea>
+    <div class="row" style="margin-top:12px">
+      <button class="btn solid" id="dbreak" ${S.dump.busy?"disabled":""}>${
+        S.dump.busy?"Breaking it down…":"Break it into tasks"}</button>
+      ${S.dump.text?`<button class="btn quiet sm" id="dclear">Clear</button>`:""}
+    </div>
+    ${P.length ? `<div class="props">
+      <div class="row" style="margin-bottom:12px">
+        <span class="lab">${P.length} task${P.length===1?"":"s"} — edit, give each a day, then add</span>
+        <span class="sp"></span>
+        <button class="btn solid sm" id="paddall">Add all to backlog</button>
+      </div>
+      ${P.map((x,i) => `<div class="prop" style="--c:var(${tv(x.k)})">
+        <div>
+          <input type="text" data-pt="${i}" value="${esc(x.t)}" aria-label="Task ${i+1}">
+          <div class="pr2">
+            <select data-pk="${i}" aria-label="Track">${trackOpts(x.k)}</select>
+            <input class="mono" type="number" min="0" step="15" data-pz="${i}" value="${x.est||""}"
+              placeholder="min" aria-label="Minutes">
+          </div>
+          <div class="days">${[1,2,3].map(n =>
+            `<button class="chipday ${n===x.p?"on":""}" data-pp="${i}:${n}">${PRIO[n]}</button>`).join("")}</div>
+          <div class="days">${dayChips(x.day, "pd", i)}</div>
+        </div>
+        <button class="x" data-px="${i}" aria-label="Remove">×</button>
+      </div>`).join("")}
+    </div>` : ""}
+  </div>`;
 }
 
 function viewBacklog(){
@@ -715,6 +937,7 @@ function viewBacklog(){
   const items = S.tasks.items.slice()
     .sort((a,b) => (a.p-b.p) || String(a.due||"9").localeCompare(String(b.due||"9")));
   const open = items.filter(t => !t.done).reduce((s,t) => s+(t.est||0), 0);
+  const noday = items.filter(t => !t.done && !t.due).length;
 
   const body = groups.map(([g,label]) => {
     const l = items.filter(t => bucket(t) === g);
@@ -726,18 +949,77 @@ function viewBacklog(){
   }).join("");
 
   return `<div class="h2"><h2>Backlog</h2>
-    <span class="sub">${open ? hm(open)+" open · about "+(open/360).toFixed(1)+" evenings" : "nothing open"}</span></div>
-  <div class="card">
+    <span class="sub">${open ? hm(open)+" open · about "+(open/360).toFixed(1)+" evenings" : "nothing open"}${
+      noday ? " · "+noday+" with no day" : ""}</span></div>
+
+  ${dumpCard()}
+
+  <div class="card" style="margin-top:16px">
     <div class="addbar">
-      <input id="nt" placeholder="What needs doing?" aria-label="Task">
-      <select id="nk" aria-label="Track">${S.cfg.tracks.map(k=>`<option value="${k.id}">${esc(k.name)}</option>`).join("")}</select>
-      <input id="nd" type="date" aria-label="Due date">
+      <input id="nt" placeholder="Or add one straight away" aria-label="Task">
+      <select id="nk" aria-label="Track">${trackOpts()}</select>
+      <input id="nd" type="date" aria-label="Day">
       <input id="ne" type="number" min="0" step="15" placeholder="min" class="mono" aria-label="Minutes">
       <button class="btn solid" id="nadd">Add</button></div>
     <div class="row" style="margin-top:11px"><span class="dim" style="font-size:12px">Priority</span>
-      ${[1,2,3].map(p=>`<button class="btn sm ${p===S.prio?"solid":"quiet"}" data-prio="${p}">${PRIO[p]}</button>`).join("")}</div>
+      ${[1,2,3].map(n=>`<button class="chipday ${n===S.prio?"on":""}" data-prio="${n}">${PRIO[n]}</button>`).join("")}</div>
   </div>
   ${body || `<div class="empty" style="margin-top:22px">Backlog is empty.</div>`}`;
+}
+
+/* turn free text into proposed tasks — Claude when available, lines otherwise */
+function splitLines(text){
+  return text.split(/\n+|(?:[.;]\s+(?=[A-Z]))/).map(x => x.replace(/^[\s\-•*\d.)]+/,"").trim())
+    .filter(x => x.length > 2)
+    .map(t => ({ t: t.length > 90 ? t.slice(0,87)+"…" : t, k:"rest", est:30, p:2, day:"" }));
+}
+
+function cleanProposals(arr){
+  const ids = S.cfg.tracks.map(t => t.id);
+  return (Array.isArray(arr) ? arr : []).slice(0,40).map(x => ({
+    t: String(x && x.t || "").slice(0,120).trim(),
+    k: ids.includes(x && x.k) ? x.k : "rest",
+    est: Math.max(0, Math.min(600, Math.round(+(x && x.est) || 30))),
+    p: [1,2,3].includes(+(x && x.p)) ? +x.p : 2,
+    day: /^\d{4}-\d{2}-\d{2}$/.test(x && x.day) ? x.day : "",
+  })).filter(x => x.t);
+}
+
+async function breakDown(){
+  const text = S.dump.text.trim();
+  if (!text) return toast("Write the dump first.");
+  S.dump.busy = true; render();
+  const sample = window.claude && window.claude.use ? await window.claude.use("sample") : null;
+  if (!sample) {
+    S.dump.proposals = splitLines(text); S.dump.busy = false; render();
+    return toast("Split by line — edit anything that came out wrong.");
+  }
+  const days = Array.from({length:7}, (_,i) => {
+    const d = addDays(new Date(), i);
+    return ymd(d) + " (" + DAYNAME[d.getDay()] + ")";
+  });
+  try {
+    const out = await sample.json(
+      "Turn this brain dump into a concrete task list.\n\n" +
+      "Track ids you may use: " + S.cfg.tracks.map(t => t.id+" = "+t.name).join("; ") + ".\n" +
+      "Days available: " + days.join(", ") + ". Sunday is a rest day — never assign work to it.\n\n" +
+      "Return ONLY a JSON array. Each element: {\"t\": an actionable title starting with a verb, " +
+      "under 80 characters; \"k\": one track id from the list; \"est\": realistic minutes as a multiple " +
+      "of 15; \"p\": 1 for must, 2 for should, 3 for someday; \"day\": a YYYY-MM-DD from the list, or \"\" }.\n\n" +
+      "Rules: split anything over 2 hours into separate tasks. Do not invent work that is not in the dump. " +
+      "Do not merge unrelated items. Assign a day only where the dump implies a deadline or an obvious " +
+      "order, otherwise \"\". Spread assigned days out; never put more than 3 hours of tasks on one day.\n\n" +
+      "Dump:\n" + text,
+      { modelTier:"default" });
+    const props = cleanProposals(out);
+    S.dump.proposals = props.length ? props : splitLines(text);
+    if (!props.length) toast("Fell back to splitting by line.");
+  } catch (e) {
+    S.dump.proposals = splitLines(text);
+    toast(e && e.code === "rate_limited" ? "Too many requests — split by line instead."
+      : "Split by line — edit anything that came out wrong.");
+  }
+  S.dump.busy = false; render();
 }
 
 /* ═══ REPORT (with the week's log folded in) ══════════════════════════════ */
@@ -914,6 +1196,20 @@ function viewSetup(){
   </div>
 
   <div class="card" style="margin-top:18px">
+    <div class="ch"><h3>Daily verse</h3><span class="sp"></span>
+      <span class="lab">${(S.cfg.verses||VERSES).length} verses · rotates by date</span></div>
+    <p class="muted" style="font-size:13.5px;margin-bottom:11px">Shipped in the KJV because it is public
+      domain. Paste any translation you prefer — a list of
+      <span class="mono">["reference", "text"]</span> pairs.</p>
+    <textarea id="vrs" class="json" spellcheck="false" style="min-height:200px"
+      aria-label="Verse list JSON">${esc(JSON.stringify(S.cfg.verses||VERSES,null,1))}</textarea>
+    <div class="row" style="margin-top:12px">
+      <button class="btn solid" id="vsave">Save verses</button>
+      <button class="btn quiet" id="vreset">Reset to the KJV set</button>
+      <span id="vmsg" class="dim" style="font-size:12.5px"></span></div>
+  </div>
+
+  <div class="card" style="margin-top:18px">
     <div class="ch"><h3>The rhythm</h3><span class="sp"></span><span class="lab">0 = Sunday · 24h times</span></div>
     <p class="muted" style="font-size:13.5px;margin-bottom:11px">Blocks are
       <span class="mono">{"start","end","label","track"}</span>. Tracks:
@@ -1010,6 +1306,76 @@ function wire(root){
     S.tasks.items = S.tasks.items.filter(x => x.id !== b.dataset.del); saveTasks(); render();
   });
   $$("[data-prio]", root).forEach(b => b.onclick = () => { S.prio = +b.dataset.prio; render(); });
+
+  /* ── editing one task ───────────────────────────────────────────────── */
+  const cut = v => { const i = v.indexOf(":"); return [v.slice(0,i), v.slice(i+1)]; };
+  const findTask = id => S.tasks.items.find(x => x.id === id);
+
+  $$("[data-edit]", root).forEach(b => b.onclick = () => {
+    S.editing = S.editing === b.dataset.edit ? null : b.dataset.edit;
+    if (S.editing && S.tab !== "backlog") S.tab = "backlog";
+    render();
+  });
+  $$("[data-cancel]", root).forEach(b => b.onclick = () => { S.editing = null; render(); });
+  $$("[data-ep]", root).forEach(b => b.onclick = () => {
+    const [id,n] = cut(b.dataset.ep), t = findTask(id);
+    if (t) { t.p = +n; saveTasks(); render(); }
+  });
+  /* one tap assigns a day — used by the editor and by "Give these a day" */
+  $$("[data-ed]", root).forEach(b => b.onclick = () => {
+    const [id,day] = cut(b.dataset.ed), t = findTask(id);
+    if (!t) return;
+    t.due = day; saveTasks(); render();
+    toast(day ? "Scheduled for " + parseYmd(day).toLocaleDateString(undefined,
+      { weekday:"long", month:"short", day:"numeric" }) : "Day cleared");
+  });
+  $$("[data-save]", root).forEach(b => b.onclick = () => {
+    const id = b.dataset.save, t = findTask(id);
+    if (!t) return;
+    const title = ($("#ei-"+id, root).value || "").trim();
+    if (!title) return $("#ei-"+id, root).focus();
+    t.t = title;
+    t.k = $("#ec-"+id, root).value;
+    t.est = +$("#ez-"+id, root).value || 0;
+    const d = $("#ex-"+id, root).value;
+    if (d !== t.due) t.due = d;
+    S.editing = null; saveTasks(); render(); toast("Saved");
+  });
+  $$("[id^='ex-']", root).forEach(i => i.onchange = () => {
+    const t = findTask(i.id.slice(3));
+    if (t) { t.due = i.value; saveTasks(); render(); }
+  });
+
+  /* ── brain dump ─────────────────────────────────────────────────────── */
+  const dp = $("#dump", root);
+  if (dp) dp.oninput = () => { S.dump.text = dp.value; };   // no re-render: keep the caret
+  const db = $("#dbreak", root);
+  if (db) db.onclick = () => { S.dump.text = ($("#dump", root) || {}).value || S.dump.text; breakDown(); };
+  const dc = $("#dclear", root);
+  if (dc) dc.onclick = () => { S.dump = { text:"", proposals:[], busy:false }; render(); };
+
+  $$("[data-pt]", root).forEach(i => i.onchange = () => S.dump.proposals[+i.dataset.pt].t = i.value.trim());
+  $$("[data-pk]", root).forEach(i => i.onchange = () => { S.dump.proposals[+i.dataset.pk].k = i.value; render(); });
+  $$("[data-pz]", root).forEach(i => i.onchange = () => S.dump.proposals[+i.dataset.pz].est = +i.value || 0);
+  $$("[data-pp]", root).forEach(b => b.onclick = () => {
+    const [i,n] = cut(b.dataset.pp); S.dump.proposals[+i].p = +n; render();
+  });
+  $$("[data-pd]", root).forEach(b => b.onclick = () => {
+    const [i,day] = cut(b.dataset.pd); S.dump.proposals[+i].day = day; render();
+  });
+  $$("[data-px]", root).forEach(b => b.onclick = () => {
+    S.dump.proposals.splice(+b.dataset.px, 1); render();
+  });
+  const pa = $("#paddall", root);
+  if (pa) pa.onclick = () => {
+    const add = S.dump.proposals.filter(x => x.t.trim());
+    if (!add.length) return toast("Nothing to add.");
+    add.forEach(x => S.tasks.items.push({ id:Math.random().toString(36).slice(2,9),
+      t:x.t.trim(), k:x.k, due:x.day || "", est:x.est || 0, p:x.p, done:false }));
+    S.dump = { text:"", proposals:[], busy:false };
+    saveTasks(); render();
+    toast(add.length + " task" + (add.length===1?"":"s") + " added");
+  };
   const nadd = $("#nadd", root);
   if (nadd) {
     const add = () => {
@@ -1065,6 +1431,20 @@ function wire(root){
       S.cfg.rhythm = p; saveCfg(); toast("Rhythm saved"); render();
     } catch (e) { $("#rmsg", root).innerHTML = '<span style="color:var(--late)">'+esc(e.message)+"</span>"; }
   };
+  const vs = $("#vsave", root);
+  if (vs) vs.onclick = () => {
+    try {
+      const v = JSON.parse($("#vrs", root).value);
+      if (!Array.isArray(v) || !v.length) throw new Error("needs to be a non-empty list");
+      v.forEach((x,i) => { if (!Array.isArray(x) || x.length < 2 || !String(x[1]).trim())
+        throw new Error("item " + (i+1) + " must be [\u201creference\u201d, \u201ctext\u201d]"); });
+      S.cfg.verses = v.map(x => [String(x[0]), String(x[1])]);
+      saveCfg(); $("#vmsg", root).textContent = ""; toast("Verses saved"); render();
+    } catch (e) { $("#vmsg", root).innerHTML = '<span style="color:var(--late)">'+esc(e.message)+"</span>"; }
+  };
+  const vr = $("#vreset", root);
+  if (vr) vr.onclick = () => { delete S.cfg.verses; saveCfg(); render(); toast("Back to the KJV set"); };
+
   const rr = $("#rreset", root);
   if (rr) rr.onclick = () => {
     S.cfg.rhythm = JSON.parse(JSON.stringify(SEED_RHYTHM)); saveCfg(); render(); toast("Back to the starting plan");

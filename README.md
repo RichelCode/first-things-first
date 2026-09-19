@@ -12,13 +12,34 @@ hours really landed against what you planned.
 
 | View | Purpose |
 |---|---|
-| **Today** | A day arc across the top — the whole day 5a–11p as one bar with a live now-pin — then the day as a timeline. One tap on a block logs its planned minutes to the right track. Daily checks with streaks, a stopwatch, a reading-plan pacer, and the three things that have to move. |
-| **Week** | The Mon–Sun rhythm, then where the week is going by domain and track by track: logged against target, with a notch for what the rhythm planned. |
-| **Backlog** | Everything being carried, with track, due date, estimate, and priority. Totals convert to "about N evenings" so the list stops lying about capacity. |
+| **Today** | A verse for the date, then a day arc — the whole day 5a–11p as one bar with a live now-pin — then the day as a timeline. One tap on a block logs its planned minutes to the right track. Daily checks with streaks, a stopwatch, a reading-plan pacer, and the three things that have to move. |
+| **Week** | The Mon–Sun rhythm with each day's assigned tasks under it, a "give these a day" card for anything unscheduled, then where the week is going by domain and track by track. |
+| **Backlog** | A brain dump box that turns free text into editable, schedulable tasks — plus every task editable in place: title, track, estimate, priority, and the day it happens. |
 | **Report** | Hours by track against the planned mark, a hit/due grid for the daily checks, plan adherence, energy, a written read of the week, and the week's raw log. |
 
 Setup lives behind the gear in the header, not in the tab bar: weekly hour targets,
 reading-plan position, the rhythm itself as editable JSON, and full export/import.
+
+### Brain dump → scheduled tasks
+
+The backlog opens with a free-text box. Write a paragraph, a list, or half-sentences;
+**Break it into tasks** turns it into a reviewable set of proposals — each with a
+suggested track, a realistic estimate, a priority, and a day — which you edit before
+anything lands in the backlog. It asks Claude to do the splitting when the host page
+grants the `sample` capability, and falls back to splitting on lines and sentences
+otherwise, so the feature works either way.
+
+Scheduling is one tap: every task and every proposal carries a row of day chips
+(Today, Tomorrow, then the next five days, plus *No day*). Sunday chips are marked
+`·rest` and greyed, so putting work there is a deliberate act rather than an accident.
+Assigned tasks then appear under their day in the Week view.
+
+### A verse for each day
+
+The Today view opens with a verse chosen by day-of-year, so it is the same all day and
+rotates through the list over the year. It ships with 48 verses in the **KJV**, which
+is public domain; Setup takes any translation as a list of `["reference", "text"]`
+pairs.
 
 ### Four domains
 
