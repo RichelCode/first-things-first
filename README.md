@@ -20,6 +20,17 @@ its estimate, so the report can still show where the hours went.
 Setup lives behind the gear in the header, not in the tab bar: weekly hour targets,
 reading-plan position, the rhythm itself as editable JSON, and full export/import.
 
+### Task details
+
+A task carries a **details** field, so the specifics from a brain dump survive the
+breaking-down instead of being flattened into a title. It renders from a deliberately
+tiny markup — a line starting with `- ` becomes a bullet, `**text**` gets emphasised
+and highlighted — and collapses behind a *details* chip so a long list still scans.
+*Details* in the Today card header expands or collapses all of them at once.
+
+The brain-dump prompt is explicit that no specific may be dropped: every detail in the
+dump has to survive in some task's details field.
+
 ### Recurring tasks
 
 A task repeats **once / daily / weekdays / weekly**. Completing one both logs its time
