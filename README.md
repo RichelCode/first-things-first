@@ -20,6 +20,15 @@ hours really landed against what you planned.
 Setup lives behind the gear in the header, not in the tab bar: weekly hour targets,
 reading-plan position, the rhythm itself as editable JSON, and full export/import.
 
+### Billing is Mondays
+
+A hard rule in the seed rhythm, enforced in three places: the day chips bounce a
+billing task landing on any other day back to the next Monday, the brain-dump prompt
+carries the rule, and a config migration (`v1 → v2`) strips billing blocks from every
+other day of a rhythm already in the store. That migration is surgical — it keeps
+edits made elsewhere in the week — but it does rebuild Monday evening from 4pm when
+the day holds under four hours of billing, since Monday now carries the whole job.
+
 ### Brain dump → scheduled tasks
 
 The backlog opens with a free-text box. Write a paragraph, a list, or half-sentences;

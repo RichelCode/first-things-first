@@ -320,7 +320,7 @@ const DOMAINS = [
 const SEED_TRACKS = [
   { id:"faith",     dom:"faith", name:"Prayer, Bible & church",    target:7,  next:"Catch the reading plan up" },
   { id:"teaching",  dom:"paid",  name:"Teaching · 6th grade math", target:40, next:"Plan a week ahead, not a night" },
-  { id:"contract",  dom:"paid",  name:"Contract work · billing",   target:7,  next:"Bulk Saturday, submit Monday" },
+  { id:"contract",  dom:"paid",  name:"Contract work · billing",   target:7,  next:"All of it Monday evening" },
   { id:"startup",   dom:"paid",  name:"Startup advisory",          target:2,  next:"Prep Monday's call on the weekend" },
   { id:"advres",    dom:"build", name:"Research with advisor",     target:4,  next:"One result before Friday" },
   { id:"algoverse", dom:"build", name:"Algoverse research",        target:2.5,next:"Clear the videos, join a group" },
@@ -343,8 +343,12 @@ const CLOSE = [ B("20:30","21:30","Dinner + wind down","rest"),
 
 const SEED_RHYTHM = {
   1:[...WEEKDAY_AM, B("16:00","17:00","Startup advisory call","startup"),
-     B("17:15","19:15","Billing — finish and submit","contract"),
-     B("19:15","20:00","Dinner","body"), B("20:00","20:20","Log the day","rest"), ...CLOSE],
+     B("17:00","17:30","Eat before you start","body"),
+     B("17:30","19:45","Billing — block 1","contract"),
+     B("19:45","20:00","Break. Stand up.","rest"),
+     B("20:00","22:00","Billing — block 2","contract"),
+     B("22:00","22:30","Billing — checks and submit","contract"),
+     B("22:30","23:00","Phone away. Sleep.","rest")],
   2:[...WEEKDAY_AM, B("16:00","17:00","Gym","body"),
      B("17:30","19:30","PhD applications — 5 cold emails","phd"),
      B("19:30","20:15","Dinner + call home","people"), B("20:15","20:30","Log the day","rest"), ...CLOSE],
@@ -358,9 +362,11 @@ const SEED_RHYTHM = {
      B("17:15","18:15","Algoverse — videos + group","algoverse"),
      B("18:30","22:00","Free. People you love, dinner out.","people"), B("22:30","23:00","Sleep","rest")],
   6:[B("07:30","08:15","Quiet time — Bible + prayer","faith"), B("08:30","09:30","Gym","body"),
-     B("10:00","12:00","Billing — block 1","contract"), B("12:00","13:00","Lunch + break","body"),
-     B("13:00","15:00","Billing — block 2","contract"), B("15:00","16:00","Break. Actually stop.","rest"),
-     B("16:00","17:30","Certification / Algoverse","cert"), B("18:00","19:00","Family call","people"),
+     B("10:00","12:00","PhD applications — cold emails + SOP","phd"),
+     B("12:00","13:00","Lunch + break","body"),
+     B("13:00","15:00","Algoverse — videos + research group","algoverse"),
+     B("15:00","16:00","Break. Actually stop.","rest"),
+     B("16:00","17:30","Certification — one module","cert"), B("18:00","19:00","Family call","people"),
      B("19:30","20:00","Weekly review + next week","rest"), B("20:00","22:30","Free","people")],
   0:[B("08:00","09:00","Quiet time + prayer","faith"), B("09:30","12:30","Church","faith"),
      B("13:00","15:00","Lunch + nap","rest"), B("15:00","18:00","Family / partner","people"),
@@ -392,8 +398,9 @@ const SEED_TASKS = [
   { t:"Reading plan: catch up to today",                     k:"faith",     p:1, est:60  },
 ];
 
+const CFG_VERSION = 2;              // 2: billing lives on Mondays only
 const SEED_CONFIG = () => ({
-  v:1, tracks:SEED_TRACKS.map(t => ({ ...t })),
+  v:CFG_VERSION, tracks:SEED_TRACKS.map(t => ({ ...t })),
   rhythm:JSON.parse(JSON.stringify(SEED_RHYTHM)),
   habits:SEED_HABITS.map(h => ({ ...h })),
   bible:{ start:new Date().getFullYear()+"-01-01", total:365, day:0 },
@@ -1002,7 +1009,8 @@ async function breakDown(){
     const out = await sample.json(
       "Turn this brain dump into a concrete task list.\n\n" +
       "Track ids you may use: " + S.cfg.tracks.map(t => t.id+" = "+t.name).join("; ") + ".\n" +
-      "Days available: " + days.join(", ") + ". Sunday is a rest day — never assign work to it.\n\n" +
+      "Days available: " + days.join(", ") + ". Sunday is a rest day — never assign work to it. " +
+      "Any billing work happens on Mondays only — give billing tasks a Monday or no day at all.\n\n" +
       "Return ONLY a JSON array. Each element: {\"t\": an actionable title starting with a verb, " +
       "under 80 characters; \"k\": one track id from the list; \"est\": realistic minutes as a multiple " +
       "of 15; \"p\": 1 for must, 2 for should, 3 for someday; \"day\": a YYYY-MM-DD from the list, or \"\" }.\n\n" +
@@ -1325,6 +1333,11 @@ function wire(root){
   $$("[data-ed]", root).forEach(b => b.onclick = () => {
     const [id,day] = cut(b.dataset.ed), t = findTask(id);
     if (!t) return;
+    if (day && isBilling({ label:t.t }) && parseYmd(day).getDay() !== 1) {
+      t.due = ymd(nextMonday()); saveTasks(); render();
+      return toast("Billing is Mondays — moved to " + parseYmd(t.due)
+        .toLocaleDateString(undefined,{ month:"short", day:"numeric" }));
+    }
     t.due = day; saveTasks(); render();
     toast(day ? "Scheduled for " + parseYmd(day).toLocaleDateString(undefined,
       { weekday:"long", month:"short", day:"numeric" }) : "Day cleared");
@@ -1361,7 +1374,11 @@ function wire(root){
     const [i,n] = cut(b.dataset.pp); S.dump.proposals[+i].p = +n; render();
   });
   $$("[data-pd]", root).forEach(b => b.onclick = () => {
-    const [i,day] = cut(b.dataset.pd); S.dump.proposals[+i].day = day; render();
+    const [i,day] = cut(b.dataset.pd), pr = S.dump.proposals[+i];
+    if (day && isBilling({ label:pr.t }) && parseYmd(day).getDay() !== 1) {
+      pr.day = ymd(nextMonday()); render(); return toast("Billing is Mondays.");
+    }
+    pr.day = day; render();
   });
   $$("[data-px]", root).forEach(b => b.onclick = () => {
     S.dump.proposals.splice(+b.dataset.px, 1); render();
@@ -1533,6 +1550,50 @@ function doImport(file){
   fr.readAsText(file);
 }
 
+/* ── migrations ────────────────────────────────────────────────────────── */
+const isBilling = b => /billing/i.test(b && b.label || "");
+const nextMonday = () => { const d = new Date(); return addDays(d, (8 - d.getDay()) % 7 || 7); };
+
+/* v2 — billing happens on Mondays and nowhere else. Surgical rather than a
+   wholesale reset, so any other edits to the rhythm survive. */
+function migrate(){
+  if ((S.cfg.v || 1) >= CFG_VERSION) return;
+  let movedOff = false;
+  Object.keys(S.cfg.rhythm || {}).forEach(k => {
+    if (k === "1" || !Array.isArray(S.cfg.rhythm[k])) return;
+    const kept = S.cfg.rhythm[k].filter(b => !isBilling(b));
+    if (kept.length !== S.cfg.rhythm[k].length) { S.cfg.rhythm[k] = kept; movedOff = true; }
+  });
+  // Monday now carries the whole job, so a leftover single block is not enough:
+  // rebuild the evening from 4pm whenever it holds under four hours of billing
+  const mon = S.cfg.rhythm["1"];
+  if (Array.isArray(mon)) {
+    const have = mon.filter(isBilling).reduce((s,b) => s + dur(b), 0);
+    if (have < 240) {
+      S.cfg.rhythm["1"] = mon.filter(b => toMin(b.start) < 16*60)
+        .concat(SEED_RHYTHM[1].filter(b => toMin(b.start) >= 16*60).map(b => ({ ...b })))
+        .sort((a,b) => toMin(a.start) - toMin(b.start));
+    }
+  }
+  // Saturday gave up four hours — hand them to the tracks that keep starving
+  if (movedOff && Array.isArray(S.cfg.rhythm["6"]) && !S.cfg.rhythm["6"].some(b => b.track === "phd")) {
+    S.cfg.rhythm["6"] = S.cfg.rhythm["6"]
+      .concat(SEED_RHYTHM[6].filter(b => b.track === "phd" || b.track === "algoverse").map(b => ({ ...b })))
+      .sort((a,b) => toMin(a.start) - toMin(b.start));
+  }
+  const ct = S.cfg.tracks.find(t => t.id === "contract");
+  if (ct && /Saturday/i.test(ct.next || "")) ct.next = "All of it Monday evening";
+  // anything already scheduled onto a non-Monday moves to the next Monday
+  S.tasks.items.forEach(t => {
+    if (!t.done && isBilling({ label:t.t }) && t.due && parseYmd(t.due).getDay() !== 1) {
+      const d = parseYmd(t.due);
+      t.due = ymd(addDays(d, (8 - d.getDay()) % 7 || 7));
+    }
+  });
+  S.cfg.v = CFG_VERSION;
+  Store.set("app/config", S.cfg); Store.set("app/tasks", S.tasks);
+}
+
 /* ── boot ──────────────────────────────────────────────────────────────── */
 async function boot(carried){
   if (carried && carried.tab) { S.tab = carried.tab; S.offset = carried.offset||0; }
@@ -1550,9 +1611,12 @@ async function boot(carried){
   else {
     S.tasks = { items: SEED_TASKS.map(s => ({ id:Math.random().toString(36).slice(2,9),
       t:s.t, k:s.k, p:s.p, est:s.est,
-      due: ymd(addDays(new Date(), s.p === 1 ? 3 : s.p === 2 ? 10 : 24)), done:false })) };
+      due: isBilling({ label:s.t }) ? ymd(nextMonday())
+         : ymd(addDays(new Date(), s.p === 1 ? 3 : s.p === 2 ? 10 : 24)), done:false })) };
     await Store.set("app/tasks", S.tasks);
   }
+
+  migrate();                       // needs both the config and the backlog in hand
 
   S.checks = (await Store.get("app/checks")) || {};
   const tm = await Store.get("app/timer");
