@@ -4,21 +4,30 @@ A single-file weekly planner and time tracker, built for someone running a full-
 job alongside contract work, research, and graduate-school applications — where the
 problem is not a missing to-do list but no honest picture of where the week went.
 
-The design premise: a week has a **shape**, not a queue. You set a repeating rhythm
-once, tick the blocks you actually kept, and on Saturday the app tells you where the
-hours really landed against what you planned.
+The design premise: **you write down everything you are carrying, assign each piece a
+day, and the day is then made of exactly that.** No prescribed schedule to fail — the
+app has no opinion about when you work until you give it one. Ticking a task logs its
+estimate, so on Saturday the report can show where the hours really went against what
+you assigned.
 
 ## What it does
 
 | View | Purpose |
 |---|---|
-| **Today** | A verse for the date, then a day arc — the whole day 5a–11p as one bar with a live now-pin — then the day as a timeline. One tap on a block logs its planned minutes to the right track. Daily checks with streaks, a stopwatch, a reading-plan pacer, and the three things that have to move. |
-| **Week** | The Mon–Sun rhythm with each day's assigned tasks under it, a "give these a day" card for anything unscheduled, then where the week is going by domain and track by track. |
+| **Today** | A verse for the date, a load bar with a four-hour mark on it, and the tasks assigned to today. Ticking one logs its estimate to its track. Plus daily checks with streaks, a stopwatch, a reading-plan pacer, and a pull-in button for anything late. |
+| **Week** | Seven days, each holding its assigned tasks, plus a "give these a day" card that schedules the rest of the backlog a tap at a time. |
 | **Backlog** | A brain dump box that turns free text into editable, schedulable tasks — plus every task editable in place: title, track, estimate, priority, and the day it happens. |
 | **Report** | Hours by track against the planned mark, a hit/due grid for the daily checks, plan adherence, energy, a written read of the week, and the week's raw log. |
 
 Setup lives behind the gear in the header, not in the tab bar: weekly hour targets,
 reading-plan position, the rhythm itself as editable JSON, and full export/import.
+
+### Recurring tasks
+
+A task repeats **once / daily / weekdays / weekly**. Completing one both logs its time
+and spawns the next occurrence at the next matching date, so there is no background
+materialisation and no chance of duplicates — the next instance exists only because
+the last one was finished.
 
 ### Billing is Mondays
 
@@ -80,8 +89,9 @@ and no telemetry.
 when one is granted, and `localStorage` otherwise. The same five paths either way:
 
 ```
-app/config      rhythm, tracks, weekly targets, habits, reading plan
-app/tasks       the backlog
+app/config      tracks, weekly targets, habits, reading plan, optional fixed blocks
+app/tasks       the backlog — every task carries its day, estimate and repeat rule
+app/dump        the brain dump and its pending proposals, so a reload never loses them
 app/checks      { habitId: { "YYYY-MM-DD": 1 } }  — drives streaks and the report grid
 app/timer       the running stopwatch, so a reload doesn't lose it
 logs/<ISO week> { entries: [...], days: { "YYYY-MM-DD": { blocks, one, note, energy } } }
@@ -98,7 +108,7 @@ the last 26 weeks. Import restores it. Do that before clearing browser data.
 
 `app.html` is deliberately one file, in reading order:
 
-1. Seed configuration — domains, tracks, the weekly rhythm, habits, starting backlog
+1. Seed configuration — domains, tracks, habits, verses (no seeded tasks, no seeded week)
 2. Date helpers — ISO week keys, minute math, 12-hour formatting
 3. `Store` — the persistence adapter
 4. `S` — in-memory state, with debounced per-path savers

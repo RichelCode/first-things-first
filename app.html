@@ -84,6 +84,7 @@ main{max-width:1140px;margin:0 auto;padding-inline:22px;padding-block:26px 80px}
   padding:3px 10px;background:var(--surface-2);color:var(--ink-2)}
 .tag.late{background:var(--late-wash);color:var(--late)}
 .tag.live{background:var(--pink);color:#fff}
+.tag.rep{background:#EDE4FF;color:var(--d-faith)}
 .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
 .empty{border-radius:var(--r-2);padding:20px;background:var(--surface-2);color:var(--ink-2);font-size:14px}
 
@@ -242,6 +243,15 @@ textarea.json{width:100%;font-family:var(--mono);font-size:12px;line-height:1.55
   font-variation-settings:"SOFT" 100,"WONK" 1}
 .verse .vr{font-size:12.5px;font-weight:700;color:var(--d-faith);margin-top:9px;letter-spacing:.02em}
 
+/* ── today's load ───────────────────────────────────────────────────────── */
+.loadbar-wrap{background:var(--surface);border-radius:var(--r);padding:16px 22px 18px;box-shadow:var(--sh);
+  margin-bottom:18px}
+.loadbar{height:22px;border-radius:999px;background:var(--ground-2);position:relative;margin:9px 0 0;
+  overflow:hidden}
+.loadbar .fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--pink)}
+.loadbar .cap{position:absolute;top:0;bottom:0;width:2.5px;background:var(--ink-2);opacity:.55}
+.loadnote{font-size:13px;color:var(--ink-2);margin-top:10px}
+
 /* ── inline task editor ─────────────────────────────────────────────────── */
 .item.edit{align-items:stretch;box-shadow:var(--sh-lift)}
 .erow{display:grid;grid-template-columns:minmax(0,1fr) 86px auto;gap:9px;align-items:center;margin-top:9px}
@@ -385,23 +395,10 @@ const SEED_HABITS = [
   { id:"sleep",   name:"Slept 7h+",           track:"rest",  days:[0,1,2,3,4,5,6] },
 ];
 
-const SEED_TASKS = [
-  { t:"Shortlist 12 programs with their December deadlines", k:"phd",       p:1, est:90  },
-  { t:"Send 5 cold emails to prospective advisors",          k:"phd",       p:1, est:90  },
-  { t:"Ask advisor for a recommendation letter",             k:"phd",       p:1, est:15  },
-  { t:"Draft statement of purpose, version 1",               k:"phd",       p:2, est:120 },
-  { t:"Algoverse: join a research group",                    k:"algoverse", p:1, est:30  },
-  { t:"Algoverse: clear the video backlog",                  k:"algoverse", p:2, est:120 },
-  { t:"Certification: finish module 1",                      k:"cert",      p:2, est:90  },
-  { t:"Monday billing run",                                  k:"contract",  p:1, est:300 },
-  { t:"Wednesday report + slides",                           k:"contract",  p:1, est:90  },
-  { t:"Reading plan: catch up to today",                     k:"faith",     p:1, est:60  },
-];
-
-const CFG_VERSION = 2;              // 2: billing lives on Mondays only
+const CFG_VERSION = 3;   // 2: billing is Mondays. 3: no prescribed rhythm — tasks drive the day
 const SEED_CONFIG = () => ({
   v:CFG_VERSION, tracks:SEED_TRACKS.map(t => ({ ...t })),
-  rhythm:JSON.parse(JSON.stringify(SEED_RHYTHM)),
+  rhythm:{ 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] },
   habits:SEED_HABITS.map(h => ({ ...h })),
   bible:{ start:new Date().getFullYear()+"-01-01", total:365, day:0 },
 });
@@ -521,6 +518,7 @@ const saveTasks  = () => queue("app/tasks",  () => S.tasks);
 const saveChecks = () => queue("app/checks", () => S.checks);
 const saveWeek   = () => queue("logs/"+S.weekKey, () => S.week);
 const saveTimer  = () => Store.set("app/timer", S.timer || { off:true });
+const saveDump   = () => queue("app/dump", () => ({ text:S.dump.text, proposals:S.dump.proposals }));
 
 async function loadWeek(key){
   S.weekKey = key;
@@ -533,7 +531,7 @@ const entriesOn = d => S.week.entries.filter(e => e.date === d);
 const loggedOn = d => entriesOn(d).reduce((s,e) => s+e.min, 0);
 
 function addEntry(trackId, min, label, date){
-  if (!(min > 0)) return;
+  if (!(min > 0)) return null;
   const d = date || ymd(new Date()), k = weekKey(parseYmd(d));
   const e = { id:Math.random().toString(36).slice(2,9), track:trackId, min:Math.round(min),
               label:label || track(trackId).name, date:d };
@@ -542,6 +540,7 @@ function addEntry(trackId, min, label, date){
     const wk = w && Array.isArray(w.entries) ? w : { entries:[], days:{} };
     wk.entries.push(e); Store.set("logs/"+k, wk);
   });
+  return e;
 }
 
 const isChecked = (h,d) => !!(S.checks[h] && S.checks[h][d]);
@@ -563,6 +562,40 @@ function streak(h){
 }
 
 const PRIO = { 1:"Must", 2:"Should", 3:"Someday" };
+const REPEATS = { "":"Once", daily:"Every day", weekdays:"Weekdays", weekly:"Weekly" };
+
+/* the next date a repeating task is due, counted from the one it just filled */
+function nextOccurrence(t){
+  const base = t.due ? parseYmd(t.due) : new Date();
+  if (t.rep === "daily") return ymd(addDays(base,1));
+  if (t.rep === "weekdays") { let d = addDays(base,1);
+    while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d,1); return ymd(d); }
+  if (t.rep === "weekly") return ymd(addDays(base,7));
+  return "";
+}
+const repeatLabel = t => !t.rep ? "" : t.rep === "weekly"
+  ? "every " + DAYNAME[(t.due ? parseYmd(t.due) : new Date()).getDay()]
+  : REPEATS[t.rep].toLowerCase();
+
+/* ticking a task is now the main way time gets logged */
+function completeTask(t, date){
+  t.done = true; t.doneAt = date;
+  if (t.est > 0) {
+    const e = addEntry(t.k, t.est, t.t, date);
+    t.entry = e && e.id;
+  }
+  if (t.rep) {
+    const due = nextOccurrence(t);
+    S.tasks.items.push({ id:Math.random().toString(36).slice(2,9), t:t.t, k:t.k, p:t.p,
+      est:t.est, due, rep:t.rep, done:false });
+    return due;
+  }
+  return "";
+}
+function uncompleteTask(t){
+  if (t.entry) { S.week.entries = S.week.entries.filter(e => e.id !== t.entry); saveWeek(); }
+  t.done = false; t.doneAt = null; t.entry = null;
+}
 function bucket(t){
   const today = ymd(new Date());
   if (t.done) return "done";
@@ -636,29 +669,14 @@ function viewToday(){
   const now = new Date(), date = ymd(now), dow = now.getDay();
   const blocks = S.cfg.rhythm[dow] || [], rec = dayRec(date);
   const nowMin = now.getHours()*60 + now.getMinutes();
-  const planned = blocks.reduce((s,b) => s+dur(b), 0);
-  const nDone = blocks.filter((b,i) => rec.blocks[i] === "done").length;
 
-  let spine = "", drawn = false;
-  blocks.forEach((b,i) => {
-    const st = rec.blocks[i] || "";
-    const isNow = nowMin >= toMin(b.start) && nowMin < toMin(b.end);
-    if (!drawn && nowMin < toMin(b.start)) {
-      spine += `<div class="nowmark"><span class="tx mono">${pad(now.getHours())}:${pad(now.getMinutes())}</span><span class="ln"></span></div>`;
-      drawn = true;
-    }
-    spine += `<div class="blk ${st} ${isNow?"now":""}" style="--c:var(${tv(b.track)})">
-      <div class="t">${clock(b.start)}<br>${clock(b.end)}</div>
-      <div><div class="lbl">${esc(b.label)}</div>
-        <div class="mt">${esc(track(b.track).name)} · ${hm(dur(b))}</div></div>
-      <div class="acts">
-        <button class="tick" data-blk="${i}" data-act="done" aria-pressed="${st==="done"}"
-          title="Did it — logs ${hm(dur(b))}">✓</button>
-        <button class="tick x" data-blk="${i}" data-act="skip" aria-pressed="${st==="skip"}"
-          title="Skipped">✕</button></div>
-    </div>`;
-  });
-  if (!drawn) spine += `<div class="nowmark"><span class="ln"></span><span class="tx mono">day's end</span></div>`;
+  const mine = S.tasks.items.filter(t => t.due === date)
+    .sort((a,b) => (a.done?1:0)-(b.done?1:0) || a.p-b.p);
+  const openT = mine.filter(t => !t.done);
+  const load = openT.reduce((s,t) => s+(t.est||0), 0);
+  const doneMin = mine.filter(t => t.done).reduce((s,t) => s+(t.est||0), 0);
+  const total = load + doneMin;
+  const late = S.tasks.items.filter(t => bucket(t) === "late");
 
   const habits = S.cfg.habits.filter(h => h.days.includes(dow)).map(h => {
     const on = isChecked(h.id, date), st = streak(h);
@@ -668,22 +686,45 @@ function viewToday(){
       <span class="st">${st ? st+"d" : "—"}</span></div>`;
   }).join("");
 
-  const open = S.tasks.items.filter(t => !t.done);
-  const due = open.filter(t => ["late","today"].includes(bucket(t)))
-    .sort((a,b) => (a.p-b.p) || String(a.due).localeCompare(String(b.due)));
-  // nothing due today is not the same as nothing that matters — show the Musts next
-  const soon = open.filter(t => !due.includes(t))
-    .sort((a,b) => (a.p-b.p) || String(a.due||"9").localeCompare(String(b.due||"9")));
-  const top = due.concat(soon).slice(0,3);
-  const topLab = due.length ? "Must move" : "Next up";
+  let spine = "";
+  if (blocks.length) {
+    spine = `<div class="card tint"><div class="row" style="margin-bottom:10px">
+      <span class="lab">Fixed commitments</span></div><div class="spine">` +
+      blocks.map((b,i) => {
+        const st = rec.blocks[i] || "";
+        const isNow = nowMin >= toMin(b.start) && nowMin < toMin(b.end);
+        return `<div class="blk ${st} ${isNow?"now":""}" style="--c:var(${tv(b.track)})">
+          <div class="t">${clock(b.start)}<br>${clock(b.end)}</div>
+          <div><div class="lbl">${esc(b.label)}</div>
+            <div class="mt">${esc(track(b.track).name)} · ${hm(dur(b))}</div></div>
+          <div class="acts">
+            <button class="tick" data-blk="${i}" data-act="done" aria-pressed="${st==="done"}"
+              title="Did it — logs ${hm(dur(b))}">✓</button>
+            <button class="tick x" data-blk="${i}" data-act="skip" aria-pressed="${st==="skip"}"
+              title="Skipped">✕</button></div></div>`;
+      }).join("") + `</div></div>`;
+  }
 
   return `
   <div class="h2"><h2>${DAYNAME[dow]}</h2>
-    <span class="sub">${hm(planned)} planned · ${nDone}/${blocks.length} done · ${hm(loggedOn(date))} logged</span>
+    <span class="sub">${total
+      ? hm(doneMin)+" done of "+hm(total)+" planned · "+mine.filter(t=>t.done).length+"/"+mine.length+" tasks"
+      : "nothing assigned to today yet"}</span>
     ${dow===0?'<span class="tag live">rest day</span>':""}</div>
 
   ${verseCard()}
-  ${blocks.length ? dayArc(blocks, rec, nowMin) : ""}
+
+  ${total ? `<div class="loadbar-wrap">
+    <div class="row"><span class="lab">Today's load</span><span class="sp"></span>
+      <span class="mono dim" style="font-size:11.5px">${hm(load)} left</span></div>
+    <div class="loadbar"><div class="fill" style="width:${Math.min(100,doneMin/total*100)}%"></div>
+      <div class="cap" style="left:${Math.min(100, 240/Math.max(total,240)*100)}%"
+        data-tip="Four hours — about what one evening after teaching actually holds"></div></div>
+    <p class="loadnote">${load > 300
+      ? "<b>That is more than an evening holds.</b> Move something to another day rather than failing it here."
+      : load > 0 ? "Realistic. Start at the top and do not reorder mid-flight."
+      : "Everything assigned to today is done."}</p>
+  </div>` : ""}
 
   <div class="two">
     <div class="grid">
@@ -692,7 +733,18 @@ function viewToday(){
         <input id="one" value="${esc(rec.one)}" placeholder="Write it. One sentence."
           aria-label="The one thing that matters today">
       </div>
-      <div class="spine">${spine || `<div class="empty">Nothing scheduled — add blocks in Setup.</div>`}</div>
+
+      <div class="card">
+        <div class="ch"><h3>Today's tasks</h3><span class="sp"></span>
+          ${late.length?`<button class="btn sm" id="pullate">Pull ${late.length} late in</button>`:""}
+          <button class="btn quiet sm" id="gotodump">Brain dump →</button></div>
+        ${mine.length ? `<div class="list">${mine.map(taskRow).join("")}</div>`
+          : `<div class="empty">Nothing assigned to today. Write a brain dump, break it into tasks,
+             and tap <b>All → Today</b>.</div>`}
+      </div>
+
+      ${spine}
+
       <div class="card tint">
         <div class="row"><span class="lab">Close the day</span><span class="sp"></span>
           ${[1,2,3,4,5].map(n => `<button class="tick" data-energy="${n}"
@@ -709,11 +761,6 @@ function viewToday(){
         ${habits}
       </div>
       ${bibleCard()}
-      <div class="card">
-        <div class="ch"><h3>${topLab}</h3></div>
-        ${top.length ? `<div class="list">${top.map(taskRow).join("")}</div>`
-          : `<div class="empty">Backlog is clear. Rest is allowed.</div>`}
-      </div>
     </div>
   </div>`;
 }
@@ -839,8 +886,10 @@ function viewWeek(){
     </div>`).join("")}
   </div>` : "";
 
+  const wkTasks = MONSUN.reduce((n,d,i) => n + assignedTo(ymd(addDays(mon,i))).length, 0);
   return `<div class="h2"><h2>Your week</h2>
-    <span class="sub">five fixed points · one deep block an evening · Sunday holds nothing</span></div>
+    <span class="sub">${wkTasks ? wkTasks+" task"+(wkTasks===1?"":"s")+" assigned across the week"
+      : "nothing assigned yet — give your backlog days below"}</span></div>
   <div class="wk">${days}</div>
   ${schedule}
   <div class="legend" style="margin:16px 0 22px">
@@ -871,7 +920,8 @@ function taskRow(t){
         ${t.est?`<span class="mono">${hm(t.est)}</span>`:""}
         ${day?`<span class="${b==="late"?"tag late":"mono"}">${b==="late"?"late · ":""}${day}</span>`
              :`<span class="dim">no day</span>`}
-        <span>${PRIO[t.p]||""}</span></div></div>
+        <span>${PRIO[t.p]||""}</span>
+        ${t.rep?`<span class="tag rep">↻ ${esc(repeatLabel(t))}</span>`:""}</div></div>
     <button class="pencil" data-edit="${t.id}" aria-label="Edit ${esc(t.t)}" title="Edit">✎</button>
     <button class="x" data-del="${t.id}" aria-label="Delete">×</button></div>`;
 }
@@ -893,6 +943,13 @@ function taskEditor(t){
         ${dayChips(t.due, "ed", t.id)}
         <input type="date" id="ex-${t.id}" value="${esc(t.due||"")}" aria-label="Or pick any date"
           style="padding:5px 8px">
+      </div>
+      <div class="row" style="gap:5px;margin-top:9px">
+        <span class="lab" style="margin-right:2px">Repeats</span>
+        ${Object.keys(REPEATS).map(r => `<button class="chipday ${(t.rep||"")===r?"on":""}"
+          data-er="${t.id}:${r}">${REPEATS[r]}</button>`).join("")}
+        ${t.rep === "weekly" && t.due
+          ? `<span class="dim" style="font-size:12px">every ${DAYNAME[parseYmd(t.due).getDay()]}</span>` : ""}
       </div>
       <div class="row" style="margin-top:12px">
         <button class="btn solid sm" data-save="${t.id}">Save</button>
@@ -920,6 +977,10 @@ function dumpCard(){
         <span class="lab">${P.length} task${P.length===1?"":"s"} — edit, give each a day, then add</span>
         <span class="sp"></span>
         <button class="btn solid sm" id="paddall">Add all to backlog</button>
+      </div>
+      <div class="row" style="margin-bottom:14px;gap:6px">
+        <span class="dim" style="font-size:12px">Put them all on</span>
+        ${dayChips("__none__", "pall", "x")}
       </div>
       ${P.map((x,i) => `<div class="prop" style="--c:var(${tv(x.k)})">
         <div>
@@ -1038,15 +1099,22 @@ function reportData(){
   const logged = {}, plan = {};
   S.week.entries.forEach(e => logged[e.track] = (logged[e.track]||0)+e.min);
   days.forEach((d,i) => (S.cfg.rhythm[MONSUN[i]]||[]).forEach(b => plan[b.track] = (plan[b.track]||0)+dur(b)));
+  // what you planned this week = the estimates on the tasks you gave these days
+  S.tasks.items.forEach(t => { if (days.includes(t.due) || (t.done && days.includes(t.doneAt)))
+    plan[t.k] = (plan[t.k]||0) + (t.est||0); });
 
   const rows = S.cfg.tracks.map(t => ({ id:t.id, name:t.name, dom:t.dom,
     logged:logged[t.id]||0, planned:plan[t.id]||0, target:t.target*60 }))
     .sort((a,b) => b.logged-a.logged || b.planned-a.planned);
 
+  // plan adherence is now "did the tasks you assigned to a day actually happen"
   let due = 0, hit = 0;
   elapsed.forEach((d,i) => {
     const rec = S.week.days[d] || { blocks:{} };
     (S.cfg.rhythm[MONSUN[i]]||[]).forEach((b,bi) => { due++; if (rec.blocks[bi] === "done") hit++; });
+    S.tasks.items.forEach(t => {
+      if (t.due === d || (t.done && t.doneAt === d)) { due++; if (t.done && t.doneAt === d) hit++; }
+    });
   });
 
   const habitRows = S.cfg.habits.map(h => {
@@ -1136,7 +1204,7 @@ function viewReport(){
 
   <div class="stats" style="margin-bottom:18px">
     <div class="stat"><div class="k">${(R.total/60).toFixed(1)}</div><div class="l">hours logged</div></div>
-    <div class="stat"><div class="k">${adh}%</div><div class="l">planned blocks kept</div></div>
+    <div class="stat"><div class="k">${adh}%</div><div class="l">of the day's plan kept</div></div>
     <div class="stat"><div class="k" style="color:var(--d-faith)">${fd?fh+"/"+fd:"—"}</div><div class="l">faith checks</div></div>
     <div class="stat"><div class="k">${R.tasksDone}</div><div class="l">tasks finished</div></div>
     <div class="stat"><div class="k" style="${R.late?"color:var(--late)":""}">${R.late}</div><div class="l">late</div></div>
@@ -1150,7 +1218,7 @@ function viewReport(){
         <div class="axis"><span>0h</span><span>${(sc/120).toFixed(0)}h</span><span>${(sc/60).toFixed(0)}h</span></div></div>
         <div class="legend" style="margin-top:14px">
           ${DOMAINS.map(d => `<span><i style="background:var(${d.v})"></i>${d.name}</span>`).join("")}
-          <span><i style="background:var(--ink-2);width:3px;height:12px;border-radius:2px"></i>planned</span></div>`
+          <span><i style="background:var(--ink-2);width:3px;height:12px;border-radius:2px"></i>assigned this week</span></div>`
         : `<div class="empty">Nothing logged yet — the chart fills in as you log.</div>`)}
     </div>
 
@@ -1218,8 +1286,11 @@ function viewSetup(){
   </div>
 
   <div class="card" style="margin-top:18px">
-    <div class="ch"><h3>The rhythm</h3><span class="sp"></span><span class="lab">0 = Sunday · 24h times</span></div>
-    <p class="muted" style="font-size:13.5px;margin-bottom:11px">Blocks are
+    <div class="ch"><h3>Fixed commitments</h3><span class="sp"></span>
+      <span class="lab">optional · 0 = Sunday · 24h times</span></div>
+    <p class="muted" style="font-size:13.5px;margin-bottom:11px">Empty by default — your days are made of the
+      tasks you assign. Put things here only if they genuinely never move (teaching hours, a standing call).
+      Blocks are
       <span class="mono">{"start","end","label","track"}</span>. Tracks:
       <span class="mono">${S.cfg.tracks.map(t=>t.id).join(", ")}</span></p>
     <textarea id="rhy" class="json" spellcheck="false" aria-label="Weekly rhythm JSON">${esc(JSON.stringify(S.cfg.rhythm,null,1))}</textarea>
@@ -1307,8 +1378,12 @@ function wire(root){
   $$("[data-task]", root).forEach(b => b.onclick = () => {
     const t = S.tasks.items.find(x => x.id === b.dataset.task);
     if (!t) return;
-    t.done = !t.done; t.doneAt = t.done ? date : null; saveTasks(); render();
-    if (t.done) toast("Done. Off your head.");
+    if (t.done) { uncompleteTask(t); saveTasks(); render(); return; }
+    const nextDue = completeTask(t, date);
+    saveTasks(); render();
+    toast(t.est ? "Done — logged " + hm(t.est) + (nextDue ? ", next on " +
+      parseYmd(nextDue).toLocaleDateString(undefined,{month:"short",day:"numeric"}) : "")
+      : "Done. Off your head.");
   });
   $$("[data-del]", root).forEach(b => b.onclick = () => {
     S.tasks.items = S.tasks.items.filter(x => x.id !== b.dataset.del); saveTasks(); render();
@@ -1325,6 +1400,34 @@ function wire(root){
     render();
   });
   $$("[data-cancel]", root).forEach(b => b.onclick = () => { S.editing = null; render(); });
+  $$("[data-er]", root).forEach(b => b.onclick = () => {
+    const [id,r] = cut(b.dataset.er), t = findTask(id);
+    if (!t) return;
+    t.rep = r;
+    if (r && !t.due) t.due = ymd(new Date());
+    saveTasks(); render();
+    toast(r ? "Repeats " + repeatLabel(t) : "No longer repeats");
+  });
+  /* put the whole dump on one day in a single tap */
+  $$("[data-pall]", root).forEach(b => b.onclick = () => {
+    const day = cut(b.dataset.pall)[1];
+    S.dump.proposals.forEach(pr => {
+      pr.day = (day && isBilling({ label:pr.t }) && parseYmd(day).getDay() !== 1)
+        ? ymd(nextMonday()) : day;
+    });
+    saveDump(); render();
+    toast(day ? "All set to " + parseYmd(day).toLocaleDateString(undefined,
+      { weekday:"long", month:"short", day:"numeric" }) : "Days cleared");
+  });
+  const pl = $("#pullate", root);
+  if (pl) pl.onclick = () => {
+    const late = S.tasks.items.filter(t => bucket(t) === "late");
+    late.forEach(t => { t.due = isBilling({ label:t.t }) ? ymd(nextMonday()) : date; });
+    saveTasks(); render(); toast(late.length + " pulled into today");
+  };
+  const gd = $("#gotodump", root);
+  if (gd) gd.onclick = () => { S.tab = "backlog"; render();
+    setTimeout(() => { const d = $("#dump"); if (d) d.focus(); }, 40); };
   $$("[data-ep]", root).forEach(b => b.onclick = () => {
     const [id,n] = cut(b.dataset.ep), t = findTask(id);
     if (t) { t.p = +n; saveTasks(); render(); }
@@ -1361,35 +1464,35 @@ function wire(root){
 
   /* ── brain dump ─────────────────────────────────────────────────────── */
   const dp = $("#dump", root);
-  if (dp) dp.oninput = () => { S.dump.text = dp.value; };   // no re-render: keep the caret
+  if (dp) dp.oninput = () => { S.dump.text = dp.value; saveDump(); };  // no re-render: keep the caret
   const db = $("#dbreak", root);
   if (db) db.onclick = () => { S.dump.text = ($("#dump", root) || {}).value || S.dump.text; breakDown(); };
   const dc = $("#dclear", root);
-  if (dc) dc.onclick = () => { S.dump = { text:"", proposals:[], busy:false }; render(); };
+  if (dc) dc.onclick = () => { S.dump = { text:"", proposals:[], busy:false }; saveDump(); render(); };
 
-  $$("[data-pt]", root).forEach(i => i.onchange = () => S.dump.proposals[+i.dataset.pt].t = i.value.trim());
-  $$("[data-pk]", root).forEach(i => i.onchange = () => { S.dump.proposals[+i.dataset.pk].k = i.value; render(); });
-  $$("[data-pz]", root).forEach(i => i.onchange = () => S.dump.proposals[+i.dataset.pz].est = +i.value || 0);
+  $$("[data-pt]", root).forEach(i => i.onchange = () => { S.dump.proposals[+i.dataset.pt].t = i.value.trim(); saveDump(); });
+  $$("[data-pk]", root).forEach(i => i.onchange = () => { S.dump.proposals[+i.dataset.pk].k = i.value; saveDump(); render(); });
+  $$("[data-pz]", root).forEach(i => i.onchange = () => { S.dump.proposals[+i.dataset.pz].est = +i.value || 0; saveDump(); });
   $$("[data-pp]", root).forEach(b => b.onclick = () => {
-    const [i,n] = cut(b.dataset.pp); S.dump.proposals[+i].p = +n; render();
+    const [i,n] = cut(b.dataset.pp); S.dump.proposals[+i].p = +n; saveDump(); render();
   });
   $$("[data-pd]", root).forEach(b => b.onclick = () => {
     const [i,day] = cut(b.dataset.pd), pr = S.dump.proposals[+i];
     if (day && isBilling({ label:pr.t }) && parseYmd(day).getDay() !== 1) {
       pr.day = ymd(nextMonday()); render(); return toast("Billing is Mondays.");
     }
-    pr.day = day; render();
+    pr.day = day; saveDump(); render();
   });
   $$("[data-px]", root).forEach(b => b.onclick = () => {
-    S.dump.proposals.splice(+b.dataset.px, 1); render();
+    S.dump.proposals.splice(+b.dataset.px, 1); saveDump(); render();
   });
   const pa = $("#paddall", root);
   if (pa) pa.onclick = () => {
     const add = S.dump.proposals.filter(x => x.t.trim());
     if (!add.length) return toast("Nothing to add.");
     add.forEach(x => S.tasks.items.push({ id:Math.random().toString(36).slice(2,9),
-      t:x.t.trim(), k:x.k, due:x.day || "", est:x.est || 0, p:x.p, done:false }));
-    S.dump = { text:"", proposals:[], busy:false };
+      t:x.t.trim(), k:x.k, due:x.day || "", est:x.est || 0, p:x.p, rep:"", done:false }));
+    S.dump = { text:"", proposals:[], busy:false }; saveDump();
     saveTasks(); render();
     toast(add.length + " task" + (add.length===1?"":"s") + " added");
   };
@@ -1399,7 +1502,7 @@ function wire(root){
       const t = $("#nt", root).value.trim();
       if (!t) return $("#nt", root).focus();
       S.tasks.items.push({ id:Math.random().toString(36).slice(2,9), t, k:$("#nk",root).value,
-        due:$("#nd",root).value||"", est:+$("#ne",root).value||0, p:S.prio, done:false });
+        due:$("#nd",root).value||"", est:+$("#ne",root).value||0, p:S.prio, rep:"", done:false });
       saveTasks(); render();
     };
     nadd.onclick = add;
@@ -1462,6 +1565,11 @@ function wire(root){
   const vr = $("#vreset", root);
   if (vr) vr.onclick = () => { delete S.cfg.verses; saveCfg(); render(); toast("Back to the KJV set"); };
 
+  const rb = $("#rback", root);
+  if (rb) rb.onclick = () => {
+    S.cfg.rhythm = S.cfg.rhythmArchive; delete S.cfg.rhythmArchive;
+    saveCfg(); render(); toast("Old week restored");
+  };
   const rr = $("#rreset", root);
   if (rr) rr.onclick = () => {
     S.cfg.rhythm = JSON.parse(JSON.stringify(SEED_RHYTHM)); saveCfg(); render(); toast("Back to the starting plan");
@@ -1554,36 +1662,19 @@ function doImport(file){
 const isBilling = b => /billing/i.test(b && b.label || "");
 const nextMonday = () => { const d = new Date(); return addDays(d, (8 - d.getDay()) % 7 || 7); };
 
-/* v2 — billing happens on Mondays and nowhere else. Surgical rather than a
-   wholesale reset, so any other edits to the rhythm survive. */
+/* v3 — the prescribed week is gone: tasks you assign carry the plan. The old
+   rhythm is archived rather than deleted, and Setup can put it back. */
 function migrate(){
-  if ((S.cfg.v || 1) >= CFG_VERSION) return;
-  let movedOff = false;
-  Object.keys(S.cfg.rhythm || {}).forEach(k => {
-    if (k === "1" || !Array.isArray(S.cfg.rhythm[k])) return;
-    const kept = S.cfg.rhythm[k].filter(b => !isBilling(b));
-    if (kept.length !== S.cfg.rhythm[k].length) { S.cfg.rhythm[k] = kept; movedOff = true; }
-  });
-  // Monday now carries the whole job, so a leftover single block is not enough:
-  // rebuild the evening from 4pm whenever it holds under four hours of billing
-  const mon = S.cfg.rhythm["1"];
-  if (Array.isArray(mon)) {
-    const have = mon.filter(isBilling).reduce((s,b) => s + dur(b), 0);
-    if (have < 240) {
-      S.cfg.rhythm["1"] = mon.filter(b => toMin(b.start) < 16*60)
-        .concat(SEED_RHYTHM[1].filter(b => toMin(b.start) >= 16*60).map(b => ({ ...b })))
-        .sort((a,b) => toMin(a.start) - toMin(b.start));
-    }
+  const from = S.cfg.v || 1;
+  if (from >= CFG_VERSION) return;
+  if (from < 3) {
+    const had = Object.keys(S.cfg.rhythm || {}).some(k => (S.cfg.rhythm[k] || []).length);
+    if (had) S.cfg.rhythmArchive = S.cfg.rhythm;
+    S.cfg.rhythm = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] };
+    const ct = S.cfg.tracks.find(t => t.id === "contract");
+    if (ct && /Saturday/i.test(ct.next || "")) ct.next = "All of it Monday evening";
   }
-  // Saturday gave up four hours — hand them to the tracks that keep starving
-  if (movedOff && Array.isArray(S.cfg.rhythm["6"]) && !S.cfg.rhythm["6"].some(b => b.track === "phd")) {
-    S.cfg.rhythm["6"] = S.cfg.rhythm["6"]
-      .concat(SEED_RHYTHM[6].filter(b => b.track === "phd" || b.track === "algoverse").map(b => ({ ...b })))
-      .sort((a,b) => toMin(a.start) - toMin(b.start));
-  }
-  const ct = S.cfg.tracks.find(t => t.id === "contract");
-  if (ct && /Saturday/i.test(ct.next || "")) ct.next = "All of it Monday evening";
-  // anything already scheduled onto a non-Monday moves to the next Monday
+  // billing still belongs to Mondays wherever it was scheduled
   S.tasks.items.forEach(t => {
     if (!t.done && isBilling({ label:t.t }) && t.due && parseYmd(t.due).getDay() !== 1) {
       const d = parseYmd(t.due);
@@ -1608,13 +1699,9 @@ async function boot(carried){
 
   const tk = await Store.get("app/tasks");
   if (tk && Array.isArray(tk.items)) S.tasks = tk;
-  else {
-    S.tasks = { items: SEED_TASKS.map(s => ({ id:Math.random().toString(36).slice(2,9),
-      t:s.t, k:s.k, p:s.p, est:s.est,
-      due: isBilling({ label:s.t }) ? ymd(nextMonday())
-         : ymd(addDays(new Date(), s.p === 1 ? 3 : s.p === 2 ? 10 : 24)), done:false })) };
-    await Store.set("app/tasks", S.tasks);
-  }
+
+  const dmp = await Store.get("app/dump");
+  if (dmp) S.dump = { text:dmp.text || "", proposals:Array.isArray(dmp.proposals)?dmp.proposals:[], busy:false };
 
   migrate();                       // needs both the config and the backlog in hand
 
