@@ -13,12 +13,13 @@ its estimate, so the report can still show where the hours went.
 
 | View | Purpose |
 |---|---|
-| **Today** | A verse for the date, a load bar marked at four hours, and today's list — which you type straight into the card. Ticking a task logs its estimate to its track; `↓` drops one back to the backlog. Plus daily checks with streaks, a stopwatch and a reading-plan pacer. |
+| **Today** | A verse for the date, a load bar marked at four hours, and today's list — which you type straight into the card, setting priority and repeat as you go. Ticking a task logs its estimate to its track; `↓` drops one back to the backlog. Plus daily checks with streaks, a stopwatch and a reading-plan pacer. |
 | **Backlog** | A brain dump box that turns free text into editable tasks bound for today or the backlog, and everything still waiting. `↑` pulls one onto today. Every task edits in place: title, track, estimate, priority, repeat. |
 | **Report** | Hours by track against the planned mark, a hit/due grid for the daily checks, plan adherence, energy, a written read of the week, and the week's raw log. |
 
 Setup lives behind the gear in the header, not in the tab bar: weekly hour targets,
-reading-plan position, the rhythm itself as editable JSON, and full export/import.
+reading-plan position, the verse list, and full export/import. There is no schedule to
+configure — the app has no fixed blocks and no opinion about when you work.
 
 ### Task details
 
@@ -33,10 +34,12 @@ dump has to survive in some task's details field.
 
 ### Recurring tasks
 
-A task repeats **once / daily / weekdays / weekly**. Completing one both logs its time
-and spawns the next occurrence at the next matching date, so there is no background
-materialisation and no chance of duplicates — the next instance exists only because
-the last one was finished.
+Repeat is set while you type the task, not afterwards: **Once**, **Every day**, or a
+strip of weekday toggles — tap `M` `W` `F` and it comes back on those days. Picking
+days also decides where the first one lands: the next matching weekday, today
+included. Completing a task both logs its time and spawns the next occurrence, so
+there is no background materialisation and no chance of duplicates — the next instance
+exists only because the last one was finished.
 
 ### Brain dump → scheduled tasks
 

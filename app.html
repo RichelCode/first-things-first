@@ -88,47 +88,11 @@ main{max-width:1140px;margin:0 auto;padding-inline:22px;padding-block:26px 80px}
 .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
 .empty{border-radius:var(--r-2);padding:20px;background:var(--surface-2);color:var(--ink-2);font-size:14px}
 
-/* ── the day arc ────────────────────────────────────────────────────────── */
-.arc-wrap{background:var(--surface);border-radius:var(--r);padding:16px 22px 18px;box-shadow:var(--sh);
-  margin-bottom:18px}
-.arc{position:relative;height:26px;border-radius:999px;background:var(--ground-2);margin:6px 0 4px}
-.seg{position:absolute;top:5px;height:16px;border-radius:999px;background:var(--c);opacity:.45;
-  border-right:2px solid var(--surface)}
-.seg.on{opacity:1}
-.arc .pin{position:absolute;top:-5px;bottom:-5px;width:2.5px;background:var(--ink);border-radius:2px}
-.arc .pin::after{content:"";position:absolute;left:-3.5px;top:-4px;width:9px;height:9px;border-radius:50%;
-  background:var(--ink)}
-.arc-sc{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
-
 /* ── one thing ──────────────────────────────────────────────────────────── */
 .one{background:linear-gradient(135deg,var(--pink-wash),var(--surface-2));border-radius:var(--r);
   padding:16px 20px 18px;box-shadow:var(--sh)}
 .one input{width:100%;margin-top:8px;font-size:16px;font-weight:600;border-color:var(--border-2);
   background:var(--surface);border-radius:var(--r-2);padding:11px 13px}
-
-/* ── day spine ──────────────────────────────────────────────────────────── */
-.spine{display:flex;flex-direction:column;gap:7px}
-.blk{display:grid;grid-template-columns:52px 1fr auto;gap:14px;align-items:center;background:var(--surface);
-  border-radius:var(--r-2);padding:11px 14px 11px 16px;box-shadow:var(--sh);position:relative;overflow:hidden}
-.blk::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
-.blk .t{font-family:var(--mono);font-size:11px;color:var(--ink-3);line-height:1.4}
-.blk .lbl{font-weight:700;font-size:14.5px;line-height:1.35}
-.blk .mt{font-size:11.5px;color:var(--ink-3);margin-top:1px}
-.blk.now{box-shadow:var(--sh-lift),0 0 0 2.5px var(--pink)}
-.blk.done{background:var(--surface-2);box-shadow:none}
-.blk.done .lbl{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--ink-3)}
-.blk.skip{opacity:.45;box-shadow:none}
-.blk.skip .lbl{text-decoration:line-through}
-.acts{display:flex;gap:5px}
-.tick{width:31px;height:31px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;
-  font-size:13px;color:var(--ink-3);line-height:1}
-.card.tint .tick{background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--border)}
-.tick:hover{background:var(--surface-3);color:var(--pink-deep)}
-.tick[aria-pressed="true"]{background:var(--pink);color:#fff}
-.tick.x[aria-pressed="true"]{background:var(--ink-3)}
-.nowmark{display:flex;align-items:center;gap:9px;padding:2px 0}
-.nowmark .ln{flex:1;height:2px;background:var(--pink);border-radius:2px;opacity:.5}
-.nowmark .tx{font-family:var(--mono);font-size:10.5px;font-weight:500;color:var(--pink-deep)}
 
 /* ── checks ─────────────────────────────────────────────────────────────── */
 .chk{display:flex;align-items:center;gap:12px;padding:6px 0}
@@ -149,36 +113,6 @@ main{max-width:1140px;margin:0 auto;padding-inline:22px;padding-block:26px 80px}
 .meter .fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--c)}
 .notch{position:absolute;top:-3px;bottom:-3px;width:2.5px;background:var(--ink-2);border-radius:2px;
   opacity:.65}
-
-/* ── week grid ──────────────────────────────────────────────────────────── */
-.wk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
-@media (max-width:940px){.wk{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:500px){.wk{grid-template-columns:1fr}}
-.day{background:var(--surface);border-radius:var(--r-2);padding:13px 13px 15px;box-shadow:var(--sh);
-  display:flex;flex-direction:column;gap:8px}
-.day.now{box-shadow:var(--sh-lift),0 0 0 2.5px var(--pink)}
-.day.sun{background:var(--surface-2);box-shadow:none}
-.day .dh{display:flex;align-items:baseline;gap:7px}
-.day .dn{font-family:var(--serif);font-size:16px;font-weight:600}
-.day .dd{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-left:auto}
-.wb{display:flex;gap:8px;font-size:11.5px;line-height:1.35}
-.wb .bar{width:4px;border-radius:2px;background:var(--c);flex:0 0 auto}
-.wb .tm{display:block;font-family:var(--mono);font-size:10px;color:var(--ink-3)}
-.domrow{display:grid;grid-template-columns:minmax(112px,150px) minmax(0,1fr) 84px;gap:14px;align-items:center}
-@media (max-width:560px){.domrow{grid-template-columns:1fr}.domrow .n{text-align:left}}
-.domrow .nm{font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
-.domrow .n{font-family:var(--mono);font-size:12px;color:var(--ink-2);text-align:right;
-  font-variant-numeric:tabular-nums}
-.trow{display:grid;grid-template-columns:minmax(0,1fr) 128px 78px;gap:14px;align-items:center;padding:9px 0}
-.trow+.trow{border-top:1.5px solid var(--border)}
-@media (max-width:700px){.trow{grid-template-columns:minmax(0,1fr) 78px;gap:6px 12px}
-  .trow .mw{grid-column:1/-1;order:3}}
-.trow .nm{font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;min-width:0}
-.trow .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.trow .nx{font-size:12px;color:var(--ink-3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap}
-.trow .n{font-family:var(--mono);font-size:12px;color:var(--ink-2);text-align:right;
-  font-variant-numeric:tabular-nums}
 
 /* ── tasks & entries ────────────────────────────────────────────────────── */
 .list{display:flex;flex-direction:column;gap:7px}
@@ -274,6 +208,11 @@ textarea.json{width:100%;font-family:var(--mono);font-size:12px;line-height:1.55
   color:var(--ink-2)}
 .chipday:hover{background:var(--surface-3);color:var(--pink-deep)}
 .chipday.on{background:var(--pink);color:#fff}
+.dstrip{display:inline-flex;gap:3px;background:var(--surface-2);padding:3px;border-radius:999px}
+.dbtn{width:27px;height:27px;border-radius:50%;font-size:12px;font-weight:700;color:var(--ink-3);
+  display:grid;place-items:center;padding:0}
+.dbtn:hover{color:var(--pink-deep);background:var(--surface-3)}
+.dbtn.on{background:var(--pink);color:#fff}
 .chipday.rest{color:var(--ink-3);opacity:.7}
 .chipday.rest::after{content:" ·rest";font-size:9.5px;letter-spacing:.04em}
 .chipday.rest.on{background:var(--ink-3);color:#fff;opacity:1}
@@ -331,7 +270,7 @@ textarea.json{width:100%;font-family:var(--mono);font-size:12px;line-height:1.55
 <script>
 "use strict";
 /* ═══════════════════════════════════════════════════════════════════════════
-   First Things First — a weekly rhythm you tick, and a Saturday report.
+   First Things First — you write today's list, tick it, and the report tells the truth.
    Four tabs. Four domains: God · Paid work · The PhD build · Life & body.
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -356,48 +295,6 @@ const SEED_TRACKS = [
   { id:"rest",      dom:"life",  name:"Rest & admin",              target:8,  next:"Sunday is not a backlog day" },
 ];
 
-const B = (start, end, label, track) => ({ start, end, label, track });
-const WEEKDAY_AM = [
-  B("05:45","06:30","Quiet time — Bible + prayer","faith"),
-  B("06:30","07:15","Get ready, eat, skincare","body"),
-  B("07:30","15:30","Teach + tomorrow's lesson","teaching"),
-  B("15:30","16:00","Commute, decompress","rest"),
-];
-const CLOSE = [ B("20:30","21:30","Dinner + wind down","rest"),
-                B("21:30","22:30","Phone away. Sleep.","rest") ];
-
-const SEED_RHYTHM = {
-  1:[...WEEKDAY_AM, B("16:00","17:00","Startup advisory call","startup"),
-     B("17:00","17:30","Eat before you start","body"),
-     B("17:30","19:45","Billing — block 1","contract"),
-     B("19:45","20:00","Break. Stand up.","rest"),
-     B("20:00","22:00","Billing — block 2","contract"),
-     B("22:00","22:30","Billing — checks and submit","contract"),
-     B("22:30","23:00","Phone away. Sleep.","rest")],
-  2:[...WEEKDAY_AM, B("16:00","17:00","Gym","body"),
-     B("17:30","19:30","PhD applications — 5 cold emails","phd"),
-     B("19:30","20:15","Dinner + call home","people"), B("20:15","20:30","Log the day","rest"), ...CLOSE],
-  3:[...WEEKDAY_AM, B("16:00","17:00","Analysis + slides, final pass","contract"),
-     B("17:00","18:00","CEO check-in","contract"), B("18:15","19:15","Certification — one module","cert"),
-     B("19:15","20:15","Dinner + rest","rest"), B("20:15","20:30","Log the day","rest"), ...CLOSE],
-  4:[...WEEKDAY_AM, B("16:00","17:00","Gym","body"),
-     B("17:30","19:30","Advisor research — run + write up","advres"),
-     B("19:30","20:00","Draft Friday's agenda","advres"), B("20:00","20:20","Log the day","rest"), ...CLOSE],
-  5:[...WEEKDAY_AM, B("16:00","17:00","Advisor research meeting","advres"),
-     B("17:15","18:15","Algoverse — videos + group","algoverse"),
-     B("18:30","22:00","Free. People you love, dinner out.","people"), B("22:30","23:00","Sleep","rest")],
-  6:[B("07:30","08:15","Quiet time — Bible + prayer","faith"), B("08:30","09:30","Gym","body"),
-     B("10:00","12:00","PhD applications — cold emails + SOP","phd"),
-     B("12:00","13:00","Lunch + break","body"),
-     B("13:00","15:00","Algoverse — videos + research group","algoverse"),
-     B("15:00","16:00","Break. Actually stop.","rest"),
-     B("16:00","17:30","Certification — one module","cert"), B("18:00","19:00","Family call","people"),
-     B("19:30","20:00","Weekly review + next week","rest"), B("20:00","22:30","Free","people")],
-  0:[B("08:00","09:00","Quiet time + prayer","faith"), B("09:30","12:30","Church","faith"),
-     B("13:00","15:00","Lunch + nap","rest"), B("15:00","18:00","Family / partner","people"),
-     B("18:00","21:00","Rest. No laptop.","rest"), B("21:30","22:00","Sleep","rest")],
-};
-
 const SEED_HABITS = [
   { id:"prayer",  name:"Prayer",              track:"faith", days:[0,1,2,3,4,5,6] },
   { id:"bible",   name:"Bible reading",       track:"faith", days:[0,1,2,3,4,5,6] },
@@ -410,10 +307,9 @@ const SEED_HABITS = [
   { id:"sleep",   name:"Slept 7h+",           track:"rest",  days:[0,1,2,3,4,5,6] },
 ];
 
-const CFG_VERSION = 3;   // 2: billing is Mondays. 3: no prescribed rhythm — tasks drive the day
+const CFG_VERSION = 4;   // 4: the rhythm is gone for good — tasks are the only plan
 const SEED_CONFIG = () => ({
   v:CFG_VERSION, tracks:SEED_TRACKS.map(t => ({ ...t })),
-  rhythm:{ 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] },
   habits:SEED_HABITS.map(h => ({ ...h })),
   bible:{ start:new Date().getFullYear()+"-01-01", total:365, day:0 },
 });
@@ -479,8 +375,6 @@ const ymd = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const parseYmd = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
 const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
 const mondayOf = d => addDays(d, -((d.getDay()+6)%7));
-const toMin = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
-const dur = b => Math.max(0, toMin(b.end)-toMin(b.start));
 const daysBetween = (a,b) => Math.round((parseYmd(b)-parseYmd(a))/86400000);
 function weekKey(d){
   const t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -490,8 +384,6 @@ function weekKey(d){
 }
 const hm = m => { m = Math.round(m); if (m <= 0) return "0m";
   const h = Math.floor(m/60), r = m%60; return h&&r ? h+"h "+r+"m" : h ? h+"h" : r+"m"; };
-const clock = t => { const [h,m] = t.split(":").map(Number);
-  return (h%12===0?12:h%12) + (m?":"+pad(m):"") + (h<12?"a":"p"); };
 
 /* ── storage ───────────────────────────────────────────────────────────── */
 const Store = {
@@ -520,6 +412,7 @@ const S = {
   cfg:null, tasks:{ items:[] }, checks:{}, week:{ entries:[], days:{} }, weekKey:"",
   timer:null, tab:"today", offset:0, showTable:false, narrative:"", prio:2,
   dump:{ text:"", proposals:[], busy:false }, editing:null, open:{},
+  newTask:{ rep:"", rdays:[] },
 };
 const track = id => S.cfg.tracks.find(t => t.id === id) || { id, name:id, dom:"life", target:0 };
 const domVar = id => (DOMAINS.find(d => d.id === id) || DOMAINS[3]).v;
@@ -541,7 +434,7 @@ async function loadWeek(key){
   S.week = w && Array.isArray(w.entries) ? w : { entries:[], days:{} };
   if (!S.week.days) S.week.days = {};
 }
-const dayRec = d => (S.week.days[d] = S.week.days[d] || { blocks:{}, one:"", note:"", energy:0 });
+const dayRec = d => (S.week.days[d] = S.week.days[d] || { one:"", note:"", energy:0 });
 const entriesOn = d => S.week.entries.filter(e => e.date === d);
 const loggedOn = d => entriesOn(d).reduce((s,e) => s+e.min, 0);
 
@@ -577,20 +470,43 @@ function streak(h){
 }
 
 const PRIO = { 1:"Must", 2:"Should", 3:"Someday" };
-const REPEATS = { "":"Once", daily:"Every day", weekdays:"Weekdays", weekly:"Weekly" };
 
-/* the next date a repeating task is due, counted from the one it just filled */
-function nextOccurrence(t){
-  const base = t.due ? parseYmd(t.due) : new Date();
-  if (t.rep === "daily") return ymd(addDays(base,1));
-  if (t.rep === "weekdays") { let d = addDays(base,1);
-    while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d,1); return ymd(d); }
-  if (t.rep === "weekly") return ymd(addDays(base,7));
+/* A task repeats on chosen weekdays, or every day, or not at all.
+   rep: "" | "daily" | "days"   rdays: [0-6] when rep is "days" */
+const DAYINIT = ["S","M","T","W","T","F","S"];
+function normalizeRepeat(t){                       // older shapes still in the store
+  if (t.rep === "weekly") { t.rep = "days"; t.rdays = [ (t.due ? parseYmd(t.due) : new Date()).getDay() ]; }
+  else if (t.rep === "weekdays") { t.rep = "days"; t.rdays = [1,2,3,4,5]; }
+  if (t.rep === "days" && !(t.rdays || []).length) t.rep = "";
+  return t;
+}
+/* the next date on or after `from` that the pattern allows */
+function matchDate(rep, rdays, from){
+  if (rep === "daily") return ymd(from);
+  if (rep !== "days" || !(rdays || []).length) return "";
+  for (let i = 0; i < 14; i++) {
+    const d = addDays(from, i);
+    if (rdays.includes(d.getDay())) return ymd(d);
+  }
   return "";
 }
-const repeatLabel = t => !t.rep ? "" : t.rep === "weekly"
-  ? "every " + DAYNAME[(t.due ? parseYmd(t.due) : new Date()).getDay()]
-  : REPEATS[t.rep].toLowerCase();
+const nextOccurrence = t => matchDate(t.rep, t.rdays, addDays(t.due ? parseYmd(t.due) : new Date(), 1));
+function repeatLabel(t){
+  if (t.rep === "daily") return "every day";
+  if (t.rep !== "days" || !(t.rdays || []).length) return "";
+  const r = t.rdays.slice().sort();
+  if (r.join() === "1,2,3,4,5") return "weekdays";
+  if (r.length === 7) return "every day";
+  if (r.length === 1) return "every " + DAYNAME[r[0]];
+  return r.map(d => DAYSHORT[d]).join(" · ");
+}
+/* the strip of weekday toggles, used on the add row and in the editor */
+function daysStrip(rdays, attr, id){
+  return `<span class="dstrip">${[0,1,2,3,4,5,6].map(d =>
+    `<button class="dbtn ${(rdays||[]).includes(d)?"on":""}" data-${attr}="${id}:${d}"
+      aria-pressed="${(rdays||[]).includes(d)}" aria-label="${DAYNAME[d]}"
+      title="${DAYNAME[d]}">${DAYINIT[d]}</button>`).join("")}</span>`;
+}
 
 /* ticking a task is now the main way time gets logged */
 function completeTask(t, date){
@@ -599,10 +515,10 @@ function completeTask(t, date){
     const e = addEntry(t.k, t.est, t.t, date);
     t.entry = e && e.id;
   }
-  if (t.rep) {
-    const due = nextOccurrence(t);
+  const due = t.rep ? nextOccurrence(t) : "";
+  if (due) {
     S.tasks.items.push({ id:Math.random().toString(36).slice(2,9), t:t.t, k:t.k, p:t.p,
-      est:t.est, due, rep:t.rep, done:false });
+      est:t.est, d:t.d, due, rep:t.rep, rdays:t.rdays, done:false });
     return due;
   }
   return "";
@@ -671,28 +587,9 @@ function bindTips(root){
 }
 
 /* ═══ TODAY ══════════════════════════════════════════════════════════════ */
-const ARC_FROM = 300, ARC_TO = 1380;          // 5am → 11pm
-const arcPct = m => Math.max(0, Math.min(100, (m-ARC_FROM)/(ARC_TO-ARC_FROM)*100));
-
-function dayArc(blocks, rec, nowMin){
-  const segs = blocks.map((b,i) => {
-    const l = arcPct(toMin(b.start)), w = Math.max(.7, arcPct(toMin(b.end))-l);
-    return `<div class="seg ${rec.blocks[i]==="done"?"on":""}" style="--c:var(${tv(b.track)});left:${l}%;width:${w}%"
-      data-tip="<b>${esc(b.label)}</b><br>${clock(b.start)}–${clock(b.end)} · ${hm(dur(b))}"></div>`;
-  }).join("");
-  const inRange = nowMin >= ARC_FROM && nowMin <= ARC_TO;
-  return `<div class="arc-wrap">
-    <div class="row"><span class="lab">The day</span><span class="sp"></span>
-      <span class="dim mono" style="font-size:11px">5a — 11p</span></div>
-    <div class="arc">${segs}${inRange?`<div class="pin" style="left:${arcPct(nowMin)}%"></div>`:""}</div>
-    <div class="arc-sc"><span>5a</span><span>9a</span><span>1p</span><span>5p</span><span>9p</span><span>11p</span></div>
-  </div>`;
-}
-
 function viewToday(){
   const now = new Date(), date = ymd(now), dow = now.getDay();
-  const blocks = S.cfg.rhythm[dow] || [], rec = dayRec(date);
-  const nowMin = now.getHours()*60 + now.getMinutes();
+  const rec = dayRec(date);
 
   const mine = todayList();
   const openT = mine.filter(t => !t.done);
@@ -708,25 +605,6 @@ function viewToday(){
       <span class="nm">${esc(h.name)}</span>
       <span class="st">${st ? st+"d" : "—"}</span></div>`;
   }).join("");
-
-  let spine = "";
-  if (blocks.length) {
-    spine = `<div class="card tint"><div class="row" style="margin-bottom:10px">
-      <span class="lab">Fixed commitments</span></div><div class="spine">` +
-      blocks.map((b,i) => {
-        const st = rec.blocks[i] || "";
-        const isNow = nowMin >= toMin(b.start) && nowMin < toMin(b.end);
-        return `<div class="blk ${st} ${isNow?"now":""}" style="--c:var(${tv(b.track)})">
-          <div class="t">${clock(b.start)}<br>${clock(b.end)}</div>
-          <div><div class="lbl">${esc(b.label)}</div>
-            <div class="mt">${esc(track(b.track).name)} · ${hm(dur(b))}</div></div>
-          <div class="acts">
-            <button class="tick" data-blk="${i}" data-act="done" aria-pressed="${st==="done"}"
-              title="Did it — logs ${hm(dur(b))}">✓</button>
-            <button class="tick x" data-blk="${i}" data-act="skip" aria-pressed="${st==="skip"}"
-              title="Skipped">✕</button></div></div>`;
-      }).join("") + `</div></div>`;
-  }
 
   return `
   <div class="h2"><h2>${DAYNAME[dow]}</h2>
@@ -768,8 +646,6 @@ function viewToday(){
           : `<div class="empty">Write today's list above — or brain dump everything and send it here.</div>`}
         </div>
       </div>
-
-      ${spine}
 
       <div class="card tint">
         <div class="row"><span class="lab">Close the day</span><span class="sp"></span>
@@ -892,12 +768,12 @@ function taskEditor(t){
       <textarea id="ed-${t.id}" rows="4" style="width:100%;margin-top:9px;font-size:13.5px"
         placeholder="Details and notes. Start a line with - for a bullet, wrap **text** to emphasise."
         aria-label="Details">${esc(t.d||"")}</textarea>
-      <div class="row" style="gap:5px;margin-top:10px">
+      <div class="row" style="gap:6px;margin-top:10px">
         <span class="lab" style="margin-right:2px">Repeats</span>
-        ${Object.keys(REPEATS).map(r => `<button class="chipday ${(t.rep||"")===r?"on":""}"
-          data-er="${t.id}:${r}">${REPEATS[r]}</button>`).join("")}
-        ${t.rep && t.rep !== "daily"
-          ? `<span class="dim" style="font-size:12px">next: ${esc(repeatLabel(t))}</span>` : ""}
+        <button class="chipday ${t.rep?"":"on"}" data-er="${t.id}:once">Once</button>
+        <button class="chipday ${t.rep==="daily"?"on":""}" data-er="${t.id}:daily">Every day</button>
+        ${daysStrip(t.rdays, "eday", t.id)}
+        ${t.rep?`<span class="dim" style="font-size:12px">${esc(repeatLabel(t))}</span>`:""}
       </div>
       <div class="row" style="margin-top:12px">
         <button class="btn solid sm" data-save="${t.id}">Save</button>
@@ -910,15 +786,26 @@ function taskEditor(t){
 
 /* the one row that adds a task, used on both Today and Backlog */
 function addRow(where){
+  const N = S.newTask, first = matchDate(N.rep, N.rdays, new Date());
   return `<div class="addbar">
     <input id="nt" placeholder="${where==="today"?"What are you doing today?":"What needs doing, some day?"}"
       aria-label="Task">
     <select id="nk" aria-label="Track">${trackOpts()}</select>
     <input id="ne" type="number" min="0" step="15" placeholder="min" class="mono" aria-label="Minutes">
     <button class="btn solid" id="nadd" data-where="${where}">Add</button></div>
-  <div class="row" style="margin-top:11px"><span class="dim" style="font-size:12px">Priority</span>
+  <div class="row" style="margin-top:11px;gap:7px">
+    <span class="dim" style="font-size:12px">Priority</span>
     ${[1,2,3].map(n=>`<button class="chipday ${n===S.prio?"on":""}" data-prio="${n}">${PRIO[n]}</button>`).join("")}
-  </div>`;
+    <span style="width:8px"></span>
+    <span class="dim" style="font-size:12px">Repeats</span>
+    <button class="chipday ${N.rep?"":"on"}" data-nrep="once">Once</button>
+    <button class="chipday ${N.rep==="daily"?"on":""}" data-nrep="daily">Every day</button>
+    ${daysStrip(N.rdays, "nday", "n")}
+  </div>
+  ${N.rep === "days" && first ? `<p class="dim" style="font-size:12px;margin-top:8px">
+    Repeats ${esc(repeatLabel(N))} — first one lands
+    <b>${first === ymd(new Date()) ? "today" :
+      parseYmd(first).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"})}</b>.</p>` : ""}`;
 }
 
 function dumpCard(){
@@ -1062,7 +949,6 @@ function reportData(){
   const today = ymd(new Date()), elapsed = days.filter(d => d <= today);
   const logged = {}, plan = {};
   S.week.entries.forEach(e => logged[e.track] = (logged[e.track]||0)+e.min);
-  days.forEach((d,i) => (S.cfg.rhythm[MONSUN[i]]||[]).forEach(b => plan[b.track] = (plan[b.track]||0)+dur(b)));
   // what you planned this week = the estimates on the tasks you gave these days
   S.tasks.items.forEach(t => { if (days.includes(t.due) || (t.done && days.includes(t.doneAt)))
     plan[t.k] = (plan[t.k]||0) + (t.est||0); });
@@ -1071,15 +957,11 @@ function reportData(){
     logged:logged[t.id]||0, planned:plan[t.id]||0, target:t.target*60 }))
     .sort((a,b) => b.logged-a.logged || b.planned-a.planned);
 
-  // plan adherence is now "did the tasks you assigned to a day actually happen"
+  // plan adherence = did the tasks you put on a day actually happen
   let due = 0, hit = 0;
-  elapsed.forEach((d,i) => {
-    const rec = S.week.days[d] || { blocks:{} };
-    (S.cfg.rhythm[MONSUN[i]]||[]).forEach((b,bi) => { due++; if (rec.blocks[bi] === "done") hit++; });
-    S.tasks.items.forEach(t => {
-      if (t.due === d || (t.done && t.doneAt === d)) { due++; if (t.done && t.doneAt === d) hit++; }
-    });
-  });
+  elapsed.forEach(d => S.tasks.items.forEach(t => {
+    if (t.due === d || (t.done && t.doneAt === d)) { due++; if (t.done && t.doneAt === d) hit++; }
+  }));
 
   const habitRows = S.cfg.habits.map(h => {
     const cells = days.map(d => ({ d, due:h.days.includes(parseYmd(d).getDay()),
@@ -1247,21 +1129,6 @@ function viewSetup(){
       <button class="btn solid" id="vsave">Save verses</button>
       <button class="btn quiet" id="vreset">Reset to the KJV set</button>
       <span id="vmsg" class="dim" style="font-size:12.5px"></span></div>
-  </div>
-
-  <div class="card" style="margin-top:18px">
-    <div class="ch"><h3>Fixed commitments</h3><span class="sp"></span>
-      <span class="lab">optional · 0 = Sunday · 24h times</span></div>
-    <p class="muted" style="font-size:13.5px;margin-bottom:11px">Empty by default — your days are made of the
-      tasks you assign. Put things here only if they genuinely never move (teaching hours, a standing call).
-      Blocks are
-      <span class="mono">{"start","end","label","track"}</span>. Tracks:
-      <span class="mono">${S.cfg.tracks.map(t=>t.id).join(", ")}</span></p>
-    <textarea id="rhy" class="json" spellcheck="false" aria-label="Weekly rhythm JSON">${esc(JSON.stringify(S.cfg.rhythm,null,1))}</textarea>
-    <div class="row" style="margin-top:12px">
-      <button class="btn solid" id="rsave">Save rhythm</button>
-      <button class="btn quiet" id="rreset">Reset to starting plan</button>
-      <span id="rmsg" class="dim" style="font-size:12.5px"></span></div>
   </div>`;
 }
 
@@ -1289,16 +1156,6 @@ function render(){
 function wire(root){
   const date = ymd(new Date());
 
-  $$("[data-blk]", root).forEach(b => b.onclick = () => {
-    const i = +b.dataset.blk, act = b.dataset.act, rec = dayRec(date);
-    const blocks = S.cfg.rhythm[new Date().getDay()] || [], was = rec.blocks[i];
-    if (was === act) delete rec.blocks[i]; else rec.blocks[i] = act;
-    if (act === "done" && was !== "done" && blocks[i]) {
-      addEntry(blocks[i].track, dur(blocks[i]), blocks[i].label, date);
-      toast("Logged " + hm(dur(blocks[i])));
-    }
-    saveWeek(); render();
-  });
   $$("[data-habit]", root).forEach(b => b.onclick = () => { toggleHabit(b.dataset.habit, date); render(); });
   $$("[data-energy]", root).forEach(b => b.onclick = () => {
     const rec = dayRec(date), n = +b.dataset.energy;
@@ -1381,10 +1238,33 @@ function wire(root){
   $$("[data-er]", root).forEach(b => b.onclick = () => {
     const [id,r] = cut(b.dataset.er), t = findTask(id);
     if (!t) return;
-    t.rep = r;
-    if (r && !t.due) t.due = ymd(new Date());
+    t.rep = r === "once" ? "" : "daily";
+    if (r === "once") t.rdays = [];
+    if (t.rep && !t.due) t.due = ymd(new Date());
     saveTasks(); render();
-    toast(r ? "Repeats " + repeatLabel(t) : "No longer repeats");
+    toast(t.rep ? "Repeats " + repeatLabel(t) : "No longer repeats");
+  });
+  /* tapping weekdays is what turns a task into a repeating one */
+  $$("[data-eday]", root).forEach(b => b.onclick = () => {
+    const [id,d] = cut(b.dataset.eday), t = findTask(id);
+    if (!t) return;
+    const set = new Set(t.rdays || []);
+    set.has(+d) ? set.delete(+d) : set.add(+d);
+    t.rdays = Array.from(set).sort();
+    t.rep = t.rdays.length ? "days" : "";
+    if (t.rep && !t.due) t.due = matchDate(t.rep, t.rdays, new Date());
+    saveTasks(); render();
+  });
+  $$("[data-nrep]", root).forEach(b => b.onclick = () => {
+    S.newTask = b.dataset.nrep === "daily" ? { rep:"daily", rdays:[] } : { rep:"", rdays:[] };
+    render();
+  });
+  $$("[data-nday]", root).forEach(b => b.onclick = () => {
+    const d = +cut(b.dataset.nday)[1], set = new Set(S.newTask.rdays || []);
+    set.has(d) ? set.delete(d) : set.add(d);
+    const rdays = Array.from(set).sort();
+    S.newTask = { rep: rdays.length ? "days" : "", rdays };
+    render();
   });
   /* send the whole dump one way or the other */
   const bulk = (btn, day) => { const e = $(btn, root); if (!e) return;
@@ -1455,10 +1335,15 @@ function wire(root){
     const add = () => {
       const t = $("#nt", root).value.trim();
       if (!t) return $("#nt", root).focus();
+      const N = S.newTask;
+      const due = N.rep ? matchDate(N.rep, N.rdays, new Date())
+                : nadd.dataset.where === "today" ? ymd(new Date()) : "";
       S.tasks.items.push({ id:Math.random().toString(36).slice(2,9), t, k:$("#nk",root).value,
-        due: nadd.dataset.where === "today" ? ymd(new Date()) : "",
-        est:+$("#ne",root).value||0, p:S.prio, rep:"", done:false });
+        due, est:+$("#ne",root).value||0, p:S.prio, rep:N.rep, rdays:N.rdays.slice(), d:"", done:false });
       saveTasks(); render();
+      if (due && due !== ymd(new Date()))
+        toast("First one on " + parseYmd(due).toLocaleDateString(undefined,
+          { weekday:"long", month:"short", day:"numeric" }));
       setTimeout(() => { const i = $("#nt"); if (i) i.focus(); }, 30);
     };
     nadd.onclick = add;
@@ -1494,42 +1379,6 @@ function wire(root){
   if (bs) bs.onchange = () => { S.cfg.bible.start = bs.value; saveCfg(); };
   const bt = $("#btotal", root);
   if (bt) bt.onchange = () => { S.cfg.bible.total = Math.max(1, +bt.value||365); saveCfg(); };
-  const rs = $("#rsave", root);
-  if (rs) rs.onclick = () => {
-    try {
-      const p = JSON.parse($("#rhy", root).value);
-      for (const k of Object.keys(p)) {
-        if (!/^[0-6]$/.test(k)) throw new Error("day keys must be 0–6, got “"+k+"”");
-        if (!Array.isArray(p[k])) throw new Error("day "+k+" must be a list of blocks");
-        p[k].forEach(b => { if (!/^\d{2}:\d{2}$/.test(b.start||"") || !/^\d{2}:\d{2}$/.test(b.end||""))
-          throw new Error("every block needs start and end as HH:MM"); });
-      }
-      S.cfg.rhythm = p; saveCfg(); toast("Rhythm saved"); render();
-    } catch (e) { $("#rmsg", root).innerHTML = '<span style="color:var(--late)">'+esc(e.message)+"</span>"; }
-  };
-  const vs = $("#vsave", root);
-  if (vs) vs.onclick = () => {
-    try {
-      const v = JSON.parse($("#vrs", root).value);
-      if (!Array.isArray(v) || !v.length) throw new Error("needs to be a non-empty list");
-      v.forEach((x,i) => { if (!Array.isArray(x) || x.length < 2 || !String(x[1]).trim())
-        throw new Error("item " + (i+1) + " must be [\u201creference\u201d, \u201ctext\u201d]"); });
-      S.cfg.verses = v.map(x => [String(x[0]), String(x[1])]);
-      saveCfg(); $("#vmsg", root).textContent = ""; toast("Verses saved"); render();
-    } catch (e) { $("#vmsg", root).innerHTML = '<span style="color:var(--late)">'+esc(e.message)+"</span>"; }
-  };
-  const vr = $("#vreset", root);
-  if (vr) vr.onclick = () => { delete S.cfg.verses; saveCfg(); render(); toast("Back to the KJV set"); };
-
-  const rb = $("#rback", root);
-  if (rb) rb.onclick = () => {
-    S.cfg.rhythm = S.cfg.rhythmArchive; delete S.cfg.rhythmArchive;
-    saveCfg(); render(); toast("Old week restored");
-  };
-  const rr = $("#rreset", root);
-  if (rr) rr.onclick = () => {
-    S.cfg.rhythm = JSON.parse(JSON.stringify(SEED_RHYTHM)); saveCfg(); render(); toast("Back to the starting plan");
-  };
   const ex = $("#exp", root);
   if (ex) ex.onclick = doExport;
   const im = $("#imp", root);
@@ -1615,28 +1464,14 @@ function doImport(file){
 }
 
 /* ── migrations ────────────────────────────────────────────────────────── */
-const isBilling = b => /billing/i.test(b && b.label || "");
-const nextMonday = () => { const d = new Date(); return addDays(d, (8 - d.getDay()) % 7 || 7); };
 
-/* v3 — the prescribed week is gone: tasks you assign carry the plan. The old
-   rhythm is archived rather than deleted, and Setup can put it back. */
+/* v4 — no rhythm, no archive, no fixed blocks. Tasks are the whole plan. */
 function migrate(){
-  const from = S.cfg.v || 1;
-  if (from >= CFG_VERSION) return;
-  if (from < 3) {
-    const had = Object.keys(S.cfg.rhythm || {}).some(k => (S.cfg.rhythm[k] || []).length);
-    if (had) S.cfg.rhythmArchive = S.cfg.rhythm;
-    S.cfg.rhythm = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] };
-    const ct = S.cfg.tracks.find(t => t.id === "contract");
-    if (ct && /Saturday/i.test(ct.next || "")) ct.next = "All of it Monday evening";
-  }
-  // billing still belongs to Mondays wherever it was scheduled
-  S.tasks.items.forEach(t => {
-    if (!t.done && isBilling({ label:t.t }) && t.due && parseYmd(t.due).getDay() !== 1) {
-      const d = parseYmd(t.due);
-      t.due = ymd(addDays(d, (8 - d.getDay()) % 7 || 7));
-    }
-  });
+  if ((S.cfg.v || 1) >= CFG_VERSION) return;
+  delete S.cfg.rhythm; delete S.cfg.rhythmArchive;
+  const ct = S.cfg.tracks.find(t => t.id === "contract");
+  if (ct && /Saturday/i.test(ct.next || "")) ct.next = "All of it Monday evening";
+  S.tasks.items.forEach(normalizeRepeat);
   S.cfg.v = CFG_VERSION;
   Store.set("app/config", S.cfg); Store.set("app/tasks", S.tasks);
 }
@@ -1654,7 +1489,7 @@ async function boot(carried){
   if (!S.cfg.bible)  S.cfg.bible  = SEED_CONFIG().bible;
 
   const tk = await Store.get("app/tasks");
-  if (tk && Array.isArray(tk.items)) S.tasks = tk;
+  if (tk && Array.isArray(tk.items)) { S.tasks = tk; S.tasks.items.forEach(normalizeRepeat); }
 
   const dmp = await Store.get("app/dump");
   if (dmp) S.dump = { text:dmp.text || "", proposals:Array.isArray(dmp.proposals)?dmp.proposals:[], busy:false };
