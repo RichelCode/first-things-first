@@ -13,6 +13,7 @@
   --coral:#FF8A6B;
   --d-faith:#7A43C9; --d-paid:#C07A0A; --d-build:#D62C72; --d-life:#0F8060;
   --ok:#0F8060; --late:#C0392B; --late-wash:#FFEAE6;
+  --star:#E0A11B; --star-wash:#FFF4DC;
   --sh:0 1px 2px rgba(200,120,150,.10), 0 10px 30px -18px rgba(190,90,130,.42);
   --sh-lift:0 2px 4px rgba(200,120,150,.12), 0 18px 40px -20px rgba(190,90,130,.5);
   --r:18px; --r-2:12px; --r-3:9px;
@@ -196,6 +197,16 @@ textarea.json{width:100%;font-family:var(--mono);font-size:12px;line-height:1.55
 .note li::marker{color:var(--c)}
 .note strong{color:var(--ink);font-weight:700;background:var(--pink-wash);padding:0 3px;border-radius:3px}
 .item.hasnote{flex-wrap:wrap}
+.star{width:30px;height:30px;border-radius:50%;flex:0 0 auto;padding:0;display:grid;place-items:center;
+  font-size:16px;line-height:1;color:var(--border-2)}
+.star:hover{background:var(--star-wash);color:var(--star)}
+.star.on{color:var(--star)}
+.star.on:hover{color:var(--star)}
+.item.starred{box-shadow:var(--sh-lift),inset 0 0 0 2px var(--star)}
+.item.starred .tt{font-weight:700}
+.starcount{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--star);
+  background:var(--star-wash);border-radius:999px;padding:3px 10px;letter-spacing:.02em}
+.starcount.full{color:#8A5D00}
 .disc{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--pink-deep);background:var(--pink-wash);
   border-radius:999px;padding:2px 9px}
 .disc:hover{background:var(--surface-3)}
@@ -518,7 +529,7 @@ function completeTask(t, date){
   const due = t.rep ? nextOccurrence(t) : "";
   if (due) {
     S.tasks.items.push({ id:Math.random().toString(36).slice(2,9), t:t.t, k:t.k, p:t.p,
-      est:t.est, d:t.d, due, rep:t.rep, rdays:t.rdays, done:false });
+      est:t.est, d:t.d, due, rep:t.rep, rdays:t.rdays, done:false });   // starts unstarred
     return due;
   }
   return "";
@@ -547,9 +558,14 @@ const trackOpts = sel => S.cfg.tracks.map(k =>
   `<option value="${k.id}" ${sel===k.id?"selected":""}>${esc(k.name)}</option>`).join("");
 /* a task is either on today's list or waiting in the backlog — nothing else */
 const onToday = t => !!t.due && t.due <= ymd(new Date());
+/* Three stars to a day. The scarcity is the point — it is what makes the
+   star mean something when the list runs to seventeen items. */
+const STAR_LIMIT = 3;
+const starsOn = day => S.tasks.items.filter(t => !t.done && t.s && (t.due || "") === (day || "")).length;
+const todayStars = () => S.tasks.items.filter(t => !t.done && t.s && onToday(t)).length;
 const todayList = () => S.tasks.items
   .filter(t => (!t.done && onToday(t)) || (t.done && t.doneAt === ymd(new Date())))
-  .sort((a,b) => (a.done?1:0)-(b.done?1:0) || a.p-b.p);
+  .sort((a,b) => (a.done?1:0)-(b.done?1:0) || (b.s?1:0)-(a.s?1:0) || a.p-b.p);
 const backlogList = () => S.tasks.items.filter(t => !t.done && !t.due);
 
 /* a deliberately tiny markup: "- " makes a bullet, **stars** emphasise */
@@ -596,7 +612,7 @@ function viewToday(){
   const load = openT.reduce((s,t) => s+(t.est||0), 0);
   const doneMin = mine.filter(t => t.done).reduce((s,t) => s+(t.est||0), 0);
   const total = load + doneMin;
-  const waiting = backlogList().length;
+  const waiting = backlogList().length, stars = todayStars();
 
   const habits = S.cfg.habits.filter(h => h.days.includes(dow)).map(h => {
     const on = isChecked(h.id, date), st = streak(h);
@@ -636,7 +652,11 @@ function viewToday(){
       </div>
 
       <div class="card">
-        <div class="ch"><h3>Today's tasks</h3><span class="sp"></span>
+        <div class="ch"><h3>Today's tasks</h3>
+          <span class="starcount ${stars>=STAR_LIMIT?"full":""}"
+            data-tip="${stars>=STAR_LIMIT?"Today is full — unstar one to swap it out"
+              :"Star the "+STAR_LIMIT+" that actually have to happen"}">★ ${stars}/${STAR_LIMIT}</span>
+          <span class="sp"></span>
           ${mine.some(t => t.d)?`<button class="btn quiet sm" id="expandall">Details</button>`:""}
           ${waiting?`<span class="dim" style="font-size:12px">${waiting} waiting</span>`:""}
           <button class="btn quiet sm" id="gotodump">Brain dump →</button></div>
@@ -734,9 +754,13 @@ function taskRow(t, inToday){
   if (S.editing === t.id) return taskEditor(t);
   const carried = !t.done && t.due && t.due < ymd(new Date());
   const shown = !!S.open[t.id];
-  return `<div class="item ${t.done?"done":""} ${t.d?"hasnote":""}" style="--c:var(${tv(t.k)})">
+  return `<div class="item ${t.done?"done":""} ${t.d?"hasnote":""} ${!t.done&&t.s?"starred":""}"
+    style="--c:var(${tv(t.k)})">
     <button class="box" data-task="${t.id}" aria-pressed="${!!t.done}" style="--c:var(${tv(t.k)})"
       aria-label="Done: ${esc(t.t)}">✓</button>
+    ${t.done?"":`<button class="star ${t.s?"on":""}" data-star="${t.id}" aria-pressed="${!!t.s}"
+      aria-label="${t.s?"Remove from today's three":"Make this one of today's three"}"
+      title="${t.s?"One of today's three":"Make it a priority"}">${t.s?"★":"☆"}</button>`}
     <div class="sp"><div class="tt">${esc(t.t)}</div>
       <div class="mt"><span>${esc(track(t.k).name)}</span>
         ${t.est?`<span class="mono">${hm(t.est)}</span>`:""}
@@ -1221,6 +1245,18 @@ function wire(root){
     render();
   });
   $$("[data-cancel]", root).forEach(b => b.onclick = () => { S.editing = null; render(); });
+  $$("[data-star]", root).forEach(b => b.onclick = () => {
+    const t = findTask(b.dataset.star);
+    if (!t || t.done) return;
+    if (t.s) { t.s = 0; saveTasks(); render(); return; }
+    const day = t.due || "";
+    if (starsOn(day) >= STAR_LIMIT) {
+      return toast(day ? "Three is the limit for one day — unstar one first"
+                       : "Three starred in the backlog already");
+    }
+    t.s = 1; saveTasks(); render();
+    toast("Starred — " + starsOn(day) + " of " + STAR_LIMIT + " for the day");
+  });
   $$("[data-open]", root).forEach(b => b.onclick = () => {
     const id = b.dataset.open;
     if (S.open[id]) delete S.open[id]; else S.open[id] = 1;
@@ -1283,9 +1319,14 @@ function wire(root){
   $$("[data-move]", root).forEach(b => b.onclick = () => {
     const t = findTask(b.dataset.move);
     if (!t) return;
-    t.due = onToday(t) ? "" : ymd(new Date());
+    const toBacklog = onToday(t);
+    t.due = toBacklog ? "" : ymd(new Date());
+    let dropped = false;
+    if (t.s && starsOn(t.due) > STAR_LIMIT) { t.s = 0; dropped = true; }
     saveTasks(); render();
-    toast(t.due ? "On today's list" : "Back in the backlog");
+    toast(toBacklog ? "Back in the backlog"
+      : dropped ? "On today's list — unstarred, today already has three"
+      : "On today's list");
   });
   $$("[data-save]", root).forEach(b => b.onclick = () => {
     const id = b.dataset.save, t = findTask(id);

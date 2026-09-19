@@ -32,6 +32,15 @@ and highlighted — and collapses behind a *details* chip so a long list still s
 The brain-dump prompt is explicit that no specific may be dropped: every detail in the
 dump has to survive in some task's details field.
 
+### Three stars to a day
+
+Every task carries a star. Starring one makes it a priority for its day — and a day
+takes **three**, enforced: the fourth is refused with a message rather than silently
+allowed, and a starred task moved onto an already-full day loses its star and says so.
+Starred tasks sort to the top and are ringed; a `★ n/3` counter sits in the Today
+header. The scarcity is the whole feature — a star means nothing on a list of
+seventeen unless the app holds the line at three.
+
 ### Recurring tasks
 
 Repeat is set while you type the task, not afterwards: **Once**, **Every day**, or a
