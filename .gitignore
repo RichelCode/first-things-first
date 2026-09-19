@@ -5,3 +5,6 @@ index.html
 first-things-first-*.json
 
 .DS_Store
+
+# personal task payload handed to the private artifact — never commit
+seed.js

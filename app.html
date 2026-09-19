@@ -1,6 +1,7 @@
 <title>First Things First</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,500..700,100,1&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=DM+Mono:wght@400;500&display=swap">
+<script src="seed.js"></script>
 <style>
 /* ── one committed visual world: blush, soft, bright ────────────────────── */
 :root{
@@ -415,27 +416,50 @@ function weekKey(d){
 const hm = m => { m = Math.round(m); if (m <= 0) return "0m";
   const h = Math.floor(m/60), r = m%60; return h&&r ? h+"h "+r+"m" : h ? h+"h" : r+"m"; };
 
-/* ── storage ───────────────────────────────────────────────────────────── */
+/* ── storage ────────────────────────────────────────────────────────────
+   Local-first. localStorage is written synchronously and is always the
+   thing the UI reads back, so a tick can never be lost to a store that is
+   slow, unavailable, or not granted. The shared store is a mirror: each
+   document carries `_t`, and whichever copy is newer wins on load. */
 const Store = {
   db:null, mode:"local",
   async connect(){
-    try { const db = window.claude && window.claude.use ? await window.claude.use("db") : null;
-      if (db) { this.db = db; this.mode = "db"; } } catch (_) {}
+    try {
+      const db = window.claude && window.claude.use ? await window.claude.use("db") : null;
+      if (db) { this.db = db; this.mode = "sync"; }
+    } catch (e) { lastError = "db connect: " + ((e && e.message) || e); }
     return this.mode;
   },
+  lsGet(p){ try { const r = localStorage.getItem("ftf:"+p); return r ? JSON.parse(r) : null; }
+    catch (e) { lastError = "local read: " + ((e && e.message) || e); return null; } },
+  lsSet(p,o){ try { localStorage.setItem("ftf:"+p, JSON.stringify(o)); return true; }
+    catch (e) { lastError = "local write: " + ((e && e.message) || e); return false; } },
+
   async get(p){
-    if (this.db) { try { const s = await this.db.doc(p).get(); return s.exists ? s.data() : null; }
-      catch (_) { return null; } }
-    try { const r = localStorage.getItem("ftf:"+p); return r ? JSON.parse(r) : null; } catch (_) { return null; }
+    const local = this.lsGet(p);
+    if (!this.db) return local;
+    let remote = null;
+    try { const snap = await this.db.doc(p).get(); if (snap.exists) remote = snap.data(); }
+    catch (e) { lastError = "store read " + p + ": " + ((e && e.code) || e.message || e); }
+    if (!remote) return local;
+    if (!local) { this.lsSet(p, remote); return remote; }
+    if ((remote._t || 0) > (local._t || 0)) { this.lsSet(p, remote); return remote; }
+    return local;
   },
+
   async set(p,o){
-    if (this.db) { try { await this.db.doc(p).set(o); return true; }
-      catch (e) { toast(e && e.code === "quota_exceeded"
-        ? "Store is full — export and prune in Setup." : "Could not save just now."); return false; } }
-    try { localStorage.setItem("ftf:"+p, JSON.stringify(o)); return true; }
-    catch (_) { toast("This browser refused to save."); return false; }
+    o._t = Date.now();
+    const ok = this.lsSet(p,o);                       // the write that matters, and it is synchronous
+    if (!ok) toast("This browser refused to save — a private window blocks storage.");
+    if (this.db) {                                    // best effort, never blocks the UI
+      try { this.db.doc(p).set(o).catch(e => { lastError = "store write " + p + ": " + ((e && e.code) || e); }); }
+      catch (e) { lastError = "store write " + p + ": " + ((e && e.message) || e); }
+    }
+    return ok;
   },
 };
+
+let lastError = "";
 
 /* ── state ─────────────────────────────────────────────────────────────── */
 const S = {
@@ -1220,11 +1244,13 @@ function viewSetup(){
         <input id="btotal" class="mono" type="number" min="1" value="${S.cfg.bible.total}"></div></div>
 
     <div class="card"><div class="ch"><h3>Diagnostics</h3><span class="sp"></span>
-      <span class="tag ${Store.mode==="db"?"live":""}">${Store.mode==="db"?"synced":"this browser"}</span></div>
+      <span class="tag ${Store.mode==="sync"?"live":""}">${
+        Store.mode==="sync"?"synced across devices":"this browser only"}</span></div>
       <div class="kv" style="font-size:13px">
         <span>Tasks held</span><span class="mono">${S.tasks.items.length}</span>
         <span>On today</span><span class="mono">${todayList().length}</span>
         <span>Config version</span><span class="mono">v${S.cfg.v || 1}</span>
+        <span>Backlog</span><span class="mono">${backlogList().length}</span>
       </div>
       ${lastError ? `<p class="mono" style="font-size:11px;color:var(--late);margin-top:10px;
         word-break:break-word">${esc(lastError.slice(0,400))}</p>`
@@ -1232,8 +1258,9 @@ function viewSetup(){
     </div>
 
     <div class="card"><div class="ch"><h3>Your data</h3></div>
-      <p class="muted" style="font-size:13.5px">${Store.mode==="db"
-        ? "Stored privately against your account." : "In this browser only — nothing was sent anywhere."}</p>
+      <p class="muted" style="font-size:13.5px">Saved in this browser first, always. ${Store.mode==="sync"
+        ? "Also mirrored to your private store, so other devices catch up."
+        : "The shared store is not reachable right now, so this browser is the only copy — export before clearing site data."}</p>
       <div class="row" style="margin-top:13px">
         <button class="btn" id="exp">Export</button>
         <button class="btn quiet" id="imp">Import backup</button></div>
@@ -1300,7 +1327,6 @@ const cut = v => { const i = v.indexOf(":"); return i < 0 ? [v,""] : [v.slice(0,
 const findTask = id => S.tasks.items.find(x => x.id === id);
 const today = () => ymd(new Date());
 
-let lastError = "";
 function guard(fn){
   try { fn(); }
   catch (e) {
@@ -1652,6 +1678,23 @@ function doImport(file){
   fr.readAsText(file);
 }
 
+/* A list handed to the page at publish time (seed.js), installed once and
+   never again. This is the delivery path that does not depend on the
+   shared store being reachable. */
+function installSeed(){
+  const seed = window.__SEED_TASKS;
+  if (!seed || !Array.isArray(seed.items) || !seed.items.length) return;
+  const done = Store.lsGet("app/seeded") || { keys: [] };
+  if (done.keys.indexOf(seed.key) >= 0) return;
+  const have = new Set(S.tasks.items.map(t => t.id));
+  const added = seed.items.filter(t => !have.has(t.id));
+  S.tasks.items = S.tasks.items.concat(added);
+  done.keys.push(seed.key);
+  Store.set("app/seeded", done);
+  Store.set("app/tasks", S.tasks);
+  if (added.length) setTimeout(() => toast(added.length + " tasks loaded"), 700);
+}
+
 /* ── migrations ────────────────────────────────────────────────────────── */
 
 /* v4 — no rhythm, no archive, no fixed blocks. Tasks are the whole plan. */
@@ -1696,6 +1739,7 @@ async function load(){
 
   const tk = await Store.get("app/tasks");
   if (tk && Array.isArray(tk.items)) { S.tasks = tk; S.tasks.items.forEach(normalizeRepeat); }
+  installSeed();
 
   const dmp = await Store.get("app/dump");
   if (dmp) S.dump = { text:dmp.text || "", proposals:Array.isArray(dmp.proposals)?dmp.proposals:[], busy:false };

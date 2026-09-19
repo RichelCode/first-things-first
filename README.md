@@ -120,16 +120,25 @@ Diagnostics reports the store mode, task counts, config version and the last err
 
 ## Data
 
-All state is local. Nothing is sent anywhere, and there is no account, no analytics,
-and no telemetry.
+All state is local. There is no account, no analytics, and no telemetry.
 
-`Store` in `app.html` is a two-mode adapter: it uses the host page's document store
-when one is granted, and `localStorage` otherwise. The same five paths either way:
+`Store` is **local-first**. `localStorage` is written synchronously on every change and
+is always what the UI reads back, so an interaction can never be lost to a document
+store that is slow, unreachable, or not granted — a failure that is otherwise invisible,
+because the app keeps rendering happily while nothing persists. When the host page does
+grant a store, it acts as a mirror: every document carries a `_t` timestamp and the
+newer copy wins on load, which gives real cross-device sync without ever putting the
+remote store in the critical path.
+
+An optional `seed.js`, handed to the page at publish time, can carry a task list into a
+browser that has none — installed once, keyed, then ignored forever. It is the delivery
+path that works when the shared store does not. The same paths are used either way:
 
 ```
 app/config      tracks, weekly targets, habits, reading plan, optional fixed blocks
 app/tasks       every task: today's date or "" for the backlog, plus estimate and repeat
 app/dump        the brain dump and its pending proposals, so a reload never loses them
+app/seeded      which one-time seed payloads have already been installed
 app/checks      { habitId: { "YYYY-MM-DD": 1 } }  — drives streaks and the report grid
 app/timer       the running stopwatch, so a reload doesn't lose it
 logs/<ISO week> { entries: [...], days: { "YYYY-MM-DD": { blocks, one, note, energy } } }
