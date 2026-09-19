@@ -32,6 +32,18 @@ and highlighted — and collapses behind a *details* chip so a long list still s
 The brain-dump prompt is explicit that no specific may be dropped: every detail in the
 dump has to survive in some task's details field.
 
+### The day's challenge
+
+The top of Today is a progress ring showing how many tasks are **left**, four
+milestone pips at 25 / 50 / 75 / 100%, and a line that changes as the day goes —
+different copy for not-started, a quarter down, past halfway, and one left. Ticking a
+task returns a short varied acknowledgement; crossing a milestone says so instead.
+
+Clearing the list flips the card to a gold **Day cleared** state and fires a brief
+canvas confetti burst — no library, and skipped entirely under
+`prefers-reduced-motion`. Cleared days are recorded like a habit, so the card can show
+a **days in a row** streak, and un-ticking a task takes the day back off the streak.
+
 ### Three stars to a day
 
 Every task carries a star. Starring one makes it a priority for its day — and a day

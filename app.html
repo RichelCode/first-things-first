@@ -178,14 +178,33 @@ textarea.json{width:100%;font-family:var(--mono);font-size:12px;line-height:1.55
   font-variation-settings:"SOFT" 100,"WONK" 1}
 .verse .vr{font-size:12.5px;font-weight:700;color:var(--d-faith);margin-top:9px;letter-spacing:.02em}
 
-/* ── today's load ───────────────────────────────────────────────────────── */
-.loadbar-wrap{background:var(--surface);border-radius:var(--r);padding:16px 22px 18px;box-shadow:var(--sh);
-  margin-bottom:18px}
-.loadbar{height:22px;border-radius:999px;background:var(--ground-2);position:relative;margin:9px 0 0;
-  overflow:hidden}
-.loadbar .fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--pink)}
-.loadbar .cap{position:absolute;top:0;bottom:0;width:2.5px;background:var(--ink-2);opacity:.55}
-.loadnote{font-size:13px;color:var(--ink-2);margin-top:10px}
+/* ── the day's challenge ────────────────────────────────────────────────── */
+.chal{display:flex;gap:22px;align-items:center;background:var(--surface);border-radius:var(--r);
+  padding:18px 24px;box-shadow:var(--sh);margin-bottom:18px}
+@media (max-width:560px){.chal{flex-direction:column;align-items:flex-start;gap:14px}}
+.ring{position:relative;width:104px;height:104px;flex:0 0 auto}
+.ring svg{width:104px;height:104px;transform:rotate(-90deg)}
+.ring .tr{fill:none;stroke:var(--ground-2);stroke-width:9}
+.ring .pg{fill:none;stroke:var(--pink);stroke-width:9;stroke-linecap:round;
+  transition:stroke-dashoffset .6s cubic-bezier(.3,1.2,.4,1)}
+.ring .rn{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;line-height:1}
+.ring .rn b{font-size:30px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ring .rn span{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-3);margin-top:4px}
+.chal-b{flex:1;min-width:0}
+.chal-h{font-family:var(--serif);font-size:21px;font-weight:600;margin-top:5px;letter-spacing:-.015em}
+.chal-s{font-size:13.5px;color:var(--ink-2);margin-top:7px}
+.pips{display:flex;gap:6px;margin-top:11px;max-width:330px}
+.pip{height:8px;flex:1;border-radius:999px;background:var(--ground-2);position:relative;overflow:hidden}
+.pip i{position:absolute;inset:0;border-radius:999px;background:var(--pink);transform-origin:left;
+  transform:scaleX(var(--f,0));transition:transform .5s ease}
+.pip.hit i{background:var(--star)}
+.chal.won{background:linear-gradient(115deg,var(--star-wash),var(--pink-wash) 70%,#F1E7FF)}
+.chal.won .pg{stroke:var(--star)}
+.chal.won .ring .rn b{font-size:34px;color:var(--star)}
+.chal.won .chal-h{font-size:25px}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:95}
 
 /* ── task details ───────────────────────────────────────────────────────── */
 .note{grid-column:1/-1;margin:10px 0 2px;padding:12px 14px;background:var(--surface-2);
@@ -631,17 +650,7 @@ function viewToday(){
 
   ${verseCard()}
 
-  ${total ? `<div class="loadbar-wrap">
-    <div class="row"><span class="lab">Today's load</span><span class="sp"></span>
-      <span class="mono dim" style="font-size:11.5px">${hm(load)} left</span></div>
-    <div class="loadbar"><div class="fill" style="width:${Math.min(100,doneMin/total*100)}%"></div>
-      <div class="cap" style="left:${Math.min(100, 240/Math.max(total,240)*100)}%"
-        data-tip="Four hours — about what one evening after teaching actually holds"></div></div>
-    <p class="loadnote">${load > 300
-      ? "<b>That is more than an evening holds.</b> Move something to another day rather than failing it here."
-      : load > 0 ? "Realistic. Start at the top and do not reorder mid-flight."
-      : "Everything assigned to today is done."}</p>
-  </div>` : ""}
+  ${challengeCard(mine, load, doneMin)}
 
   <div class="two">
     <div class="grid">
@@ -684,6 +693,72 @@ function viewToday(){
       </div>
       ${bibleCard()}
     </div>
+  </div>`;
+}
+
+/* consecutive days where every task on the list got done */
+function clearedStreak(){
+  let n = 0, d = new Date(), guard = 0;
+  while (guard++ < 400) {
+    const k = ymd(d);
+    if (isChecked("__cleared", k)) n++;
+    else if (k !== ymd(new Date())) break;
+    d = addDays(d, -1);
+  }
+  return n;
+}
+
+const CHEERS = ["Nice.", "That's one.", "Good.", "Down.", "Got it.", "Yes.", "Clean.", "Next."];
+
+function challengeCard(mine, load, doneMin){
+  const total = mine.length, done = mine.filter(t => t.done).length, left = total - done;
+  if (!total) return "";
+  const pct = done / total, all = left === 0;
+  const C = 264, streak = clearedStreak();
+
+  let head, sub;
+  if (all) {
+    head = "Day cleared.";
+    sub = `${total} task${total===1?"":"s"}, ${hm(doneMin)} logged${
+      streak > 1 ? ` · <b>${streak} days in a row</b>` : ""}. Close the laptop.`;
+  } else if (done === 0) {
+    head = `${left} to go.`;
+    sub = `Star three, start with one. ${load > 300
+      ? "<b>This is more than an evening holds</b> — move what will not fit rather than failing it here."
+      : "You do not have to see the end to take the first one."}`;
+  } else if (pct < .25) {
+    head = `${left} left.`;  sub = "Started is the hard part, and it is behind you.";
+  } else if (pct < .5) {
+    head = `${left} left.`;  sub = "A quarter down. Keep the same order, do not reshuffle.";
+  } else if (pct < .75) {
+    head = `${left} left.`;  sub = "Past halfway. The back half runs faster than the front.";
+  } else if (left > 1) {
+    head = `${left} left.`;  sub = "Three quarters. Do not stop to admire it.";
+  } else {
+    head = "One left.";      sub = "One task between you and a cleared day.";
+  }
+
+  return `<div class="chal ${all?"won":""}">
+    <div class="ring">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="tr" cx="50" cy="50" r="42"></circle>
+        <circle class="pg" cx="50" cy="50" r="42"
+          style="stroke-dasharray:${C};stroke-dashoffset:${C*(1-pct)}"></circle>
+      </svg>
+      <div class="rn"><b>${all?"\u2605":left}</b><span>${all?"cleared":"left"}</span></div>
+    </div>
+    <div class="chal-b">
+      <span class="lab">${all?"Today":"Today's challenge"}</span>
+      <p class="chal-h">${head}</p>
+      <div class="pips">${[.25,.5,.75,1].map((m,i) => {
+        const prev = i ? [.25,.5,.75,1][i-1] : 0;
+        const f = Math.max(0, Math.min(1, (pct - prev) / (m - prev)));
+        return `<div class="pip ${f>=1?"hit":""}" data-tip="${Math.round(m*100)}% — ${
+          Math.ceil(m*total)} of ${total}"><i style="--f:${f}"></i></div>`;
+      }).join("")}</div>
+      <p class="chal-s">${sub}</p>
+    </div>
+    <span class="sr" role="status">${done} of ${total} tasks done</span>
   </div>`;
 }
 
@@ -1223,12 +1298,32 @@ function wire(root){
   $$("[data-task]", root).forEach(b => b.onclick = () => {
     const t = S.tasks.items.find(x => x.id === b.dataset.task);
     if (!t) return;
-    if (t.done) { uncompleteTask(t); saveTasks(); render(); return; }
+    if (t.done) {
+      uncompleteTask(t);
+      if (isChecked("__cleared", date)) toggleHabit("__cleared", date);  // no longer a cleared day
+      saveTasks(); render(); return;
+    }
     const nextDue = completeTask(t, date);
-    saveTasks(); render();
-    toast(t.est ? "Done — logged " + hm(t.est) + (nextDue ? ", next on " +
-      parseYmd(nextDue).toLocaleDateString(undefined,{month:"short",day:"numeric"}) : "")
-      : "Done. Off your head.");
+    saveTasks();
+
+    const list = todayList(), total = list.length, left = list.filter(x => !x.done).length;
+    const doneN = total - left, wasOn = isChecked("__cleared", date);
+    if (total && !left && !wasOn) checkOn("__cleared", date);
+    render();
+
+    if (total && !left) {
+      celebrate();
+      const st = clearedStreak();
+      toast(st > 1 ? "Day cleared — " + st + " in a row." : "Day cleared. Every single one.");
+      return;
+    }
+    const pct = total ? doneN/total : 0, prev = total ? (doneN-1)/total : 0;
+    const mile = [.25,.5,.75].find(m => prev < m && pct >= m);
+    if (mile) return toast(Math.round(mile*100) + "% down — " + left + " to go");
+    toast(CHEERS[Math.floor(Math.random()*CHEERS.length)]
+      + (t.est ? " Logged " + hm(t.est) + "." : "")
+      + (nextDue ? " Back on " + parseYmd(nextDue)
+          .toLocaleDateString(undefined,{ weekday:"long" }) + "." : ""));
   });
   $$("[data-del]", root).forEach(b => b.onclick = () => {
     S.tasks.items = S.tasks.items.filter(x => x.id !== b.dataset.del); saveTasks(); render();
@@ -1426,6 +1521,36 @@ function wire(root){
   if (im) im.onclick = () => $("#impf", root).click();
   const imf = $("#impf", root);
   if (imf) imf.onchange = () => doImport(imf.files[0]);
+}
+
+/* a short burst of paper — the only animation in the app, and it has to earn it */
+function celebrate(){
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cv = document.createElement("canvas");
+  cv.className = "confetti"; document.body.appendChild(cv);
+  const ctx = cv.getContext("2d"), dpr = window.devicePixelRatio || 1;
+  const W = cv.width = innerWidth*dpr, H = cv.height = innerHeight*dpr;
+  cv.style.width = innerWidth+"px"; cv.style.height = innerHeight+"px";
+  const cols = ["#E8497D","#E0A11B","#7A43C9","#0F8060","#FF8A6B","#D62C72"];
+  const bits = Array.from({length:150}, () => ({
+    x: W*(.15+Math.random()*.7), y: H*.42 + (Math.random()-.5)*60*dpr,
+    vx: (Math.random()-.5)*12*dpr, vy: (-8-Math.random()*10)*dpr,
+    r: (3.5+Math.random()*4.5)*dpr, c: cols[(Math.random()*cols.length)|0],
+    a: Math.random()*6.3, va: (Math.random()-.5)*.32,
+  }));
+  const t0 = performance.now();
+  (function frame(now){
+    const el = now - t0;
+    ctx.clearRect(0,0,W,H);
+    ctx.globalAlpha = Math.max(0, 1 - Math.max(0, el-1500)/1400);
+    bits.forEach(p => {
+      p.vy += .33*dpr; p.vx *= .994; p.x += p.vx; p.y += p.vy; p.a += p.va;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.r, -p.r*.45, p.r*2, p.r*.9);
+      ctx.restore();
+    });
+    if (el < 2900) requestAnimationFrame(frame); else cv.remove();
+  })(t0);
 }
 
 /* ── reflection ────────────────────────────────────────────────────────── */
