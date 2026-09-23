@@ -32,6 +32,18 @@ and highlighted — and collapses behind a *details* chip so a long list still s
 The brain-dump prompt is explicit that no specific may be dropped: every detail in the
 dump has to survive in some task's details field.
 
+### Daily checks
+
+A short list of things that hold the week together — prayer, Bible reading, quiet
+time, the gym, a sermon, work toward the certification, food, sleep. Each shows a
+streak on Today and a hit/due row in the weekly report, and each is due only on the
+days you choose. Setup edits the whole list: rename, retrack, toggle the days, add or
+remove. Removing one keeps its history, so bringing it back restores the streak.
+
+New checks shipped in a later build appear automatically — the config is forward-filled
+on load rather than needing a migration, and a check that changes meaning keeps its id
+so its streak carries over.
+
 ### The day's challenge
 
 The top of Today is a progress ring showing how many tasks are **left**, four

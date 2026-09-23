@@ -1,4 +1,4 @@
-<title>First Things First</title>
+<title>Living Everyday as though it is the last :)</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,500..700,100,1&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=DM+Mono:wght@400;500&display=swap">
 <script src="seed.js"></script>
@@ -170,6 +170,11 @@ table.data th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color
 table.data td.n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
 .scroll{overflow-x:auto}
 .kv{display:grid;grid-template-columns:minmax(0,1fr) 108px;gap:10px 14px;align-items:center;font-size:14px}
+.hedit{display:flex;flex-direction:column;gap:8px}
+.hrow{display:grid;grid-template-columns:minmax(0,1fr) 170px auto auto;gap:10px;align-items:center;
+  padding-left:11px;border-left:4px solid var(--c);border-radius:3px}
+@media (max-width:760px){.hrow{grid-template-columns:minmax(0,1fr) auto}
+  .hrow select{grid-column:1/-1}}
 textarea.json{width:100%;font-family:var(--mono);font-size:12px;line-height:1.55;min-height:250px}
 
 /* ── scripture banner ───────────────────────────────────────────────────── */
@@ -331,14 +336,16 @@ const SEED_HABITS = [
   { id:"bible",   name:"Bible reading",       track:"faith", days:[0,1,2,3,4,5,6] },
   { id:"quiet",   name:"Quiet time",          track:"faith", days:[0,1,2,3,4,5,6] },
   { id:"church",  name:"Church",              track:"faith", days:[0] },
-  { id:"move",    name:"Moved my body",       track:"body",  days:[2,4,6] },
+  { id:"move",     name:"Go to the gym",             track:"body",  days:[1,2,3,4,5,6] },
+  { id:"sermon",   name:"Listen to a sermon",        track:"faith", days:[0,1,2,3,4,5,6] },
+  { id:"certwork", name:"Worked toward certification",track:"cert",  days:[1,2,3,4,5,6] },
   { id:"food",    name:"Ate real food",       track:"body",  days:[0,1,2,3,4,5,6] },
   { id:"skin",    name:"Skincare",            track:"body",  days:[0,1,2,3,4,5,6] },
   { id:"offline", name:"Screens off by 21:30",track:"rest",  days:[1,2,3,4,5] },
   { id:"sleep",   name:"Slept 7h+",           track:"rest",  days:[0,1,2,3,4,5,6] },
 ];
 
-const CFG_VERSION = 4;   // 4: the rhythm is gone for good — tasks are the only plan
+const CFG_VERSION = 5;   // 5: gym, sermon and certification join the daily checks
 const SEED_CONFIG = () => ({
   v:CFG_VERSION, tracks:SEED_TRACKS.map(t => ({ ...t })),
   habits:SEED_HABITS.map(h => ({ ...h })),
@@ -1227,7 +1234,7 @@ function viewReport(){
 function viewSetup(){
   const sum = S.cfg.tracks.reduce((s,t) => s+t.target, 0);
   return `<div class="h2"><h2>Setup</h2>
-    <span class="sub">when a week proves a block wrong, change the block</span></div>
+    <span class="sub">the checklist, the targets and the verses are all yours to change</span></div>
   <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
     <div class="card"><div class="ch"><h3>Weekly targets</h3><span class="sp"></span>
       <span class="lab">${sum.toFixed(1)}h of 168</span></div>
@@ -1242,6 +1249,26 @@ function viewSetup(){
         <label for="bstart">Started</label><input id="bstart" type="date" value="${esc(S.cfg.bible.start)}">
         <label for="btotal">Readings in plan</label>
         <input id="btotal" class="mono" type="number" min="1" value="${S.cfg.bible.total}"></div></div>
+
+    <div class="card" style="grid-column:1/-1">
+      <div class="ch"><h3>Daily checks</h3><span class="sp"></span>
+        <span class="lab">which days each one is due</span></div>
+      <div class="hedit">
+        ${S.cfg.habits.map(h => `<div class="hrow" style="--c:var(${tv(h.track)})">
+          <input type="text" data-hname="${h.id}" value="${esc(h.name)}" aria-label="Check name">
+          <select data-htrack="${h.id}" aria-label="Track">${trackOpts(h.track)}</select>
+          ${daysStrip(h.days, "hday", h.id)}
+          <button class="x" data-hdel="${h.id}" aria-label="Remove ${esc(h.name)}">×</button>
+        </div>`).join("")}
+      </div>
+      <div class="hrow" style="--c:var(--border-2);margin-top:12px;padding-top:12px;
+        border-top:1.5px solid var(--border)">
+        <input type="text" id="hnew" placeholder="Add another check" aria-label="New check">
+        <select id="hnewk" aria-label="Track">${trackOpts("body")}</select>
+        <span class="dim" style="font-size:12px">daily by default</span>
+        <button class="btn solid sm" id="hadd">Add</button>
+      </div>
+    </div>
 
     <div class="card"><div class="ch"><h3>Diagnostics</h3><span class="sp"></span>
       <span class="tag ${Store.mode==="sync"?"live":""}">${
@@ -1313,8 +1340,9 @@ function render(){
    error surfaces as a message instead of killing the rest of the app. */
 
 const CLICK_KEYS = ["task","star","open","edit","cancel","save","del","move","ep","er","eday",
-  "prio","nrep","nday","habit","energy","bible","quick","px","pd","pp","delentry","blk"];
-const CHANGE_KEYS = ["pt","pk","pz","pn","target"];
+  "prio","nrep","nday","habit","energy","bible","quick","px","pd","pp","delentry","blk",
+  "hday","hdel"];
+const CHANGE_KEYS = ["pt","pk","pz","pn","target","hname","htrack"];
 
 function findHit(node, keys){
   for (let el = node; el && el !== document.body; el = el.parentElement) {
@@ -1409,6 +1437,13 @@ const ACTIONS = {
     } catch (e) { $("#vmsg").innerHTML = '<span style="color:var(--late)">'+esc(e.message)+"</span>"; }
   },
   vreset(){ delete S.cfg.verses; saveCfg(); render(); toast("Back to the KJV set"); },
+  hadd(){
+    const name = ($("#hnew").value || "").trim();
+    if (!name) return $("#hnew").focus();
+    const id = "h" + Math.random().toString(36).slice(2,7);
+    S.cfg.habits.push({ id, name, track:$("#hnewk").value, days:[0,1,2,3,4,5,6] });
+    saveCfg(); render(); toast("Added to your daily checks");
+  },
 };
 
 /* ── data-attribute actions ───────────────────────────────────────────── */
@@ -1524,6 +1559,20 @@ const HANDLERS = {
   pp(v){ const [i,n] = cut(v); S.dump.proposals[+i].p = +n; saveDump(); render(); },
   delentry(id){ S.week.entries = S.week.entries.filter(e => e.id !== id); saveWeek(); render(); },
   blk(){ /* fixed blocks were removed; kept so an old cached page cannot throw */ },
+  hday(v){
+    const [id,d] = cut(v), h = S.cfg.habits.find(x => x.id === id);
+    if (!h) return;
+    const set = new Set(h.days || []);
+    set.has(+d) ? set.delete(+d) : set.add(+d);
+    h.days = Array.from(set).sort();
+    saveCfg(); render();
+  },
+  hdel(id){
+    const h = S.cfg.habits.find(x => x.id === id);
+    S.cfg.habits = S.cfg.habits.filter(x => x.id !== id);
+    saveCfg(); render();
+    toast(h ? "\u201c" + h.name + "\u201d removed \u2014 its history is kept" : "Removed");
+  },
 };
 
 function bindEvents(){
@@ -1548,6 +1597,16 @@ function bindEvents(){
       if (hit && hit.key === "pk") { S.dump.proposals[+hit.val].k = el.value; saveDump(); return render(); }
       if (hit && hit.key === "pz") { S.dump.proposals[+hit.val].est = +el.value || 0; return saveDump(); }
       if (hit && hit.key === "pn") { S.dump.proposals[+hit.val].d = el.value; return saveDump(); }
+      if (hit && hit.key === "hname") {
+        const h = S.cfg.habits.find(x => x.id === hit.val);
+        if (h) { h.name = el.value.trim() || h.name; saveCfg(); render(); }
+        return;
+      }
+      if (hit && hit.key === "htrack") {
+        const h = S.cfg.habits.find(x => x.id === hit.val);
+        if (h) { h.track = el.value; saveCfg(); render(); }
+        return;
+      }
       if (hit && hit.key === "target") { track(hit.val).target = Math.max(0, +el.value || 0);
         saveCfg(); return toast("Target updated"); }
       if (id === "one")    { dayRec(today()).one = el.value.trim(); saveWeek(); return toast("Saved"); }
@@ -1701,6 +1760,9 @@ function installSeed(){
 function migrate(){
   if ((S.cfg.v || 1) >= CFG_VERSION) return;
   delete S.cfg.rhythm; delete S.cfg.rhythmArchive;
+  // same id, so the streak "Moved my body" already built carries straight over
+  const mv = (S.cfg.habits || []).find(h => h.id === "move");
+  if (mv) { mv.name = "Go to the gym"; mv.days = [1,2,3,4,5,6]; }
   const ct = S.cfg.tracks.find(t => t.id === "contract");
   if (ct && /Saturday/i.test(ct.next || "")) ct.next = "All of it Monday evening";
   S.tasks.items.forEach(normalizeRepeat);
@@ -1735,6 +1797,9 @@ async function load(){
   if (!S.cfg || !Array.isArray(S.cfg.tracks)) { S.cfg = SEED_CONFIG(); await Store.set("app/config", S.cfg); }
   SEED_TRACKS.forEach(st => { if (!S.cfg.tracks.some(t => t.id === st.id)) S.cfg.tracks.push({ ...st }); });
   if (!S.cfg.habits) S.cfg.habits = SEED_HABITS.map(h => ({ ...h }));
+  SEED_HABITS.forEach(sh => {            // a check added in a later build just appears
+    if (!S.cfg.habits.some(h => h.id === sh.id)) S.cfg.habits.push({ ...sh });
+  });
   if (!S.cfg.bible)  S.cfg.bible  = SEED_CONFIG().bible;
 
   const tk = await Store.get("app/tasks");
